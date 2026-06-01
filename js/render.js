@@ -16,9 +16,9 @@ window.Garden = window.Garden || {};
     const totalPlots = state.gridSize * state.gridSize;
 
     let expandBtnHtml = "";
-    if (exp) {
-      const canExpand = state.level >= exp.minLevel && state.coins >= exp.cost;
-      expandBtnHtml = `<button class="expand-btn" data-action="expand" ${canExpand ? "" : "disabled"}>
+    if (exp && state.level >= exp.minLevel) {
+      const canAfford = state.coins >= exp.cost;
+      expandBtnHtml = `<button class="expand-btn" data-action="expand" ${canAfford ? "" : "disabled"}>
         Expand to ${exp.to}×${exp.to} (${exp.cost})
       </button>`;
     }
