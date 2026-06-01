@@ -84,5 +84,30 @@ window.Garden = window.Garden || {};
     return { ok: true, leveledUp };
   }
 
-  Garden.state = { createInitialState, getStage, plant, water, sun, harvest, xpForNextLevel };
+  const GRID_EXPANSIONS = [
+    { from: 3, to: 4, cost: 500,  minLevel: 5  },
+    { from: 4, to: 5, cost: 2000, minLevel: 10 },
+  ];
+
+  function nextExpansion(state) {
+    return GRID_EXPANSIONS.find(e => e.from === state.gridSize) || null;
+  }
+
+  function expandGrid(state) {
+    const exp = nextExpansion(state);
+    if (!exp) return { ok: false, reason: "max-size" };
+    if (state.level < exp.minLevel) return { ok: false, reason: "locked" };
+    if (state.coins < exp.cost) return { ok: false, reason: "broke" };
+
+    state.coins -= exp.cost;
+    state.gridSize = exp.to;
+    const newLen = exp.to * exp.to;
+    while (state.plots.length < newLen) state.plots.push(null);
+    return { ok: true };
+  }
+
+  Garden.state = {
+    createInitialState, getStage, plant, water, sun, harvest,
+    xpForNextLevel, expandGrid, nextExpansion, GRID_EXPANSIONS,
+  };
 })(window.Garden);
