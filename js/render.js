@@ -79,7 +79,7 @@ window.Garden = window.Garden || {};
   function renderShelf(state) {
     const wrap = el(`
       <div class="shelf">
-        <div class="shelf-label">Seeds — click to select, then click an empty plot</div>
+        <div class="shelf-label">Seeds</div>
         <div class="seeds"></div>
       </div>
     `);
@@ -99,12 +99,12 @@ window.Garden = window.Garden || {};
       card.dataset.flowerId = flower.id;
 
       const right = locked
-        ? `<span class="seed-lock">🔒 Lv ${flower.levelReq}</span>`
-        : `<span class="seed-cost">${flower.seedCost}🪙</span>`;
+        ? `<span class="seed-lock">Lv ${flower.levelReq}</span>`
+        : `<span class="seed-cost"><span class="mini-coin"></span>${flower.seedCost}</span>`;
 
       card.innerHTML = `
         <div class="seed-icon">${Garden.svg.flowerIcon(flower.id)}</div>
-        <div>
+        <div class="seed-info">
           <div class="seed-name">${flower.name}</div>
           ${right}
         </div>

@@ -186,7 +186,23 @@ body {
 .seed-card.unaffordable {
   opacity: 0.7;
 }
-.seed-icon { width: 24px; height: 24px; flex-shrink: 0; }
+.seed-icon { width: 28px; height: 28px; flex-shrink: 0; }
+.seed-info { display: flex; flex-direction: column; gap: 2px; line-height: 1.2; }
 .seed-name { font-weight: bold; }
-.seed-cost { color: #7a5e2a; font-size: 11px; }
+.seed-cost {
+  color: #7a5e2a;
+  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
 .seed-lock { color: #999; font-size: 11px; }
+.mini-coin {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  background: radial-gradient(circle at 30% 30%, #ffe66b, #d4a017);
+  border-radius: 50%;
+  border: 1px solid #a87f0e;
+  flex-shrink: 0;
+}
