@@ -7,6 +7,8 @@ window.Garden = window.Garden || {};
     return t.content.firstChild;
   }
 
+  let selectedSeedId = "daisy";
+
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
     const xpPct = Math.min(100, Math.floor((state.xp / xpNeeded) * 100));
@@ -74,13 +76,63 @@ window.Garden = window.Garden || {};
     return wrap;
   }
 
+  function renderShelf(state) {
+    const wrap = el(`
+      <div class="shelf">
+        <div class="shelf-label">Seeds — click to select, then click an empty plot</div>
+        <div class="seeds"></div>
+      </div>
+    `);
+    const seedsEl = wrap.querySelector(".seeds");
+
+    Garden.FLOWERS.forEach(flower => {
+      const locked = state.level < flower.levelReq;
+      const unaffordable = !locked && state.coins < flower.seedCost;
+      const isSelected = !locked && flower.id === selectedSeedId;
+
+      const card = document.createElement("div");
+      let cls = "seed-card";
+      if (locked) cls += " locked";
+      else if (unaffordable) cls += " unaffordable";
+      if (isSelected) cls += " selected";
+      card.className = cls;
+      card.dataset.flowerId = flower.id;
+
+      const right = locked
+        ? `<span class="seed-lock">🔒 Lv ${flower.levelReq}</span>`
+        : `<span class="seed-cost">${flower.seedCost}🪙</span>`;
+
+      card.innerHTML = `
+        <div class="seed-icon">${Garden.svg.flowerIcon(flower.id)}</div>
+        <div>
+          <div class="seed-name">${flower.name}</div>
+          ${right}
+        </div>
+      `;
+      seedsEl.appendChild(card);
+    });
+
+    return wrap;
+  }
+
   function renderAll(state) {
+    // Ensure selectedSeedId is still unlocked; otherwise pick the first unlocked.
+    const selectedFlower = Garden.flowerById(selectedSeedId);
+    if (!selectedFlower || state.level < selectedFlower.levelReq) {
+      const firstUnlocked = Garden.FLOWERS.find(f => state.level >= f.levelReq);
+      selectedSeedId = firstUnlocked ? firstUnlocked.id : null;
+    }
+
     const app = document.getElementById("app");
     app.innerHTML = "";
     app.appendChild(renderTopBar(state));
     app.appendChild(renderGrid(state));
-    // Shelf added in next task.
+    app.appendChild(renderShelf(state));
   }
 
-  Garden.render = { renderAll, renderTopBar, renderGrid };
+  Garden.render = {
+    renderAll, renderTopBar, renderGrid, renderShelf,
+    setSelectedSeedId: (id) => { selectedSeedId = id; },
+    getSelectedSeedId: () => selectedSeedId,
+  };
 })(window.Garden);
