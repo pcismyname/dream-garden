@@ -37,12 +37,50 @@ window.Garden = window.Garden || {};
     `);
   }
 
+  function renderGrid(state) {
+    const now = Date.now();
+    const wrap = el(`<div class="garden"><div class="grid" style="grid-template-columns:repeat(${state.gridSize}, 72px); grid-template-rows:repeat(${state.gridSize}, 72px);"></div></div>`);
+    const grid = wrap.querySelector(".grid");
+
+    state.plots.forEach((plot, idx) => {
+      const plotEl = document.createElement("div");
+      plotEl.className = "plot";
+      plotEl.dataset.idx = idx;
+
+      if (plot) {
+        const stage = Garden.state.getStage(plot, now);
+        const content = document.createElement("div");
+        content.className = "plot-content";
+        content.innerHTML = Garden.svg.flowerSvg(plot.flowerId, stage);
+        plotEl.appendChild(content);
+
+        if (stage === "bloomed") {
+          const badge = document.createElement("div");
+          badge.className = "ready-badge";
+          badge.textContent = "✓";
+          plotEl.appendChild(badge);
+        } else if (stage === "growing") {
+          const remaining = Math.max(0, Math.ceil((plot.bloomAt - now) / 1000));
+          const timer = document.createElement("div");
+          timer.className = "timer";
+          timer.textContent = `${remaining}s`;
+          plotEl.appendChild(timer);
+        }
+      }
+
+      grid.appendChild(plotEl);
+    });
+
+    return wrap;
+  }
+
   function renderAll(state) {
     const app = document.getElementById("app");
     app.innerHTML = "";
     app.appendChild(renderTopBar(state));
-    // Grid and shelf added in later tasks.
+    app.appendChild(renderGrid(state));
+    // Shelf added in next task.
   }
 
-  Garden.render = { renderAll, renderTopBar };
+  Garden.render = { renderAll, renderTopBar, renderGrid };
 })(window.Garden);
