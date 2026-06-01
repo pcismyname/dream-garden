@@ -15,13 +15,14 @@ window.Garden = window.Garden || {};
     const sig = stageSignature(state, now);
 
     if (sig !== lastStageSig) {
-      // A plot transitioned (e.g., growing → bloomed). Full rebuild.
+      // A plot transitioned (e.g., growing → bloomed, bloomed → wilted). Full rebuild.
       lastStageSig = sig;
       Garden.render.renderAll(state);
       return;
     }
 
     // No stage transitions — just update the live countdown text in place.
+    // Growing plots count down to bloomAt; bloomed plots count down to bloomAt + growMs (wilt).
     const plotEls = document.querySelectorAll(".plot");
     state.plots.forEach((plot, idx) => {
       if (!plot || !plot.bloomAt) return;
@@ -29,13 +30,27 @@ window.Garden = window.Garden || {};
       if (!plotEl) return;
       const timerEl = plotEl.querySelector(".timer");
       if (!timerEl) return;
-      const remaining = Math.max(0, Math.ceil((plot.bloomAt - now) / 1000));
+
+      const stage = Garden.state.getStage(plot, now);
+      let target;
+      if (stage === "growing") {
+        target = plot.bloomAt;
+      } else if (stage === "bloomed") {
+        const flower = Garden.flowerById(plot.flowerId);
+        target = plot.bloomAt + (flower ? flower.growMs : 0);
+      } else {
+        return; // wilted or other — no live timer
+      }
+      const remaining = Math.max(0, Math.ceil((target - now) / 1000));
       timerEl.textContent = `${remaining}s`;
     });
   }
 
   function start() {
     state = Garden.storage.load() || Garden.state.createInitialState();
+    // Backward-compat for saves from v1.0 that don't have these fields.
+    if (!state.plantCounts) state.plantCounts = {};
+    if (!state.discovered) state.discovered = {};
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
     lastStageSig = stageSignature(state, Date.now());
