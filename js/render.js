@@ -57,9 +57,26 @@ window.Garden = window.Garden || {};
         plotEl.appendChild(content);
 
         if (stage === "bloomed") {
+          // Show ✓ badge + wilt countdown so the player knows the harvest window is finite.
           const badge = document.createElement("div");
           badge.className = "ready-badge";
           badge.textContent = "✓";
+          plotEl.appendChild(badge);
+
+          const flower = Garden.flowerById(plot.flowerId);
+          if (flower) {
+            const wiltAt = plot.bloomAt + flower.growMs;
+            const remaining = Math.max(0, Math.ceil((wiltAt - now) / 1000));
+            const timer = document.createElement("div");
+            timer.className = "timer wilt-timer";
+            timer.textContent = `${remaining}s`;
+            plotEl.appendChild(timer);
+          }
+        } else if (stage === "wilted") {
+          plotEl.classList.add("wilted");
+          const badge = document.createElement("div");
+          badge.className = "wilt-badge";
+          badge.textContent = "✕";
           plotEl.appendChild(badge);
         } else if (stage === "growing") {
           const remaining = Math.max(0, Math.ceil((plot.bloomAt - now) / 1000));
@@ -179,6 +196,7 @@ window.Garden = window.Garden || {};
       if (stage === "seed") Garden.state.water(state, idx);
       else if (stage === "watered") Garden.state.sun(state, idx);
       else if (stage === "bloomed") Garden.state.harvest(state, idx);
+      else if (stage === "wilted") Garden.state.clear(state, idx);
       // growing → no-op
     }
     Garden.storage.save(state);
