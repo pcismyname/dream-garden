@@ -8,6 +8,7 @@ window.Garden = window.Garden || {};
   }
 
   let selectedSeedId = "daisy";
+  let catalogOpen = false;
 
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
@@ -34,9 +35,86 @@ window.Garden = window.Garden || {};
           <div class="xp-bar"><div class="xp-fill" style="width:${xpPct}%"></div></div>
           <span>${state.xp}/${xpNeeded} XP</span>
         </div>
-        <div>${totalPlots} plots ${expandBtnHtml}</div>
+        <div class="topbar-right">
+          <span>${totalPlots} plots</span>
+          ${expandBtnHtml}
+          <button class="icon-btn" data-action="open-catalog">Catalog</button>
+        </div>
       </div>
     `);
+  }
+
+  function renderCatalogCard(flower, locked, progress, intervalNeeded) {
+    if (locked) {
+      const parent = Garden.flowerById(flower.parentId);
+      return el(`
+        <div class="catalog-card locked-card">
+          <div class="catalog-icon">${Garden.svg.MYSTERY_ICON}</div>
+          <div class="catalog-info">
+            <div class="catalog-name">???</div>
+            <div class="catalog-hint">
+              Plant ${intervalNeeded} ${parent ? parent.name : "?"}s
+            </div>
+            <div class="catalog-progress">${progress}/${intervalNeeded}</div>
+          </div>
+        </div>
+      `);
+    }
+    // Discovered/normal card
+    const stats = [];
+    stats.push(`Lv ${flower.levelReq}`);
+    if (!flower.rare) {
+      stats.push(`<span class="mini-coin"></span>${flower.seedCost}→<span class="mini-coin"></span>${flower.sellPrice}`);
+    } else {
+      stats.push(`Sells <span class="mini-coin"></span>${flower.sellPrice}`);
+    }
+    stats.push(`${Math.round(flower.growMs / 1000)}s grow`);
+
+    return el(`
+      <div class="catalog-card ${flower.rare ? "rare-card" : ""}">
+        <div class="catalog-icon">${Garden.svg.flowerIcon(flower.id)}</div>
+        <div class="catalog-info">
+          <div class="catalog-name">${flower.name}${flower.rare ? ' <span class="rare-tag">RARE</span>' : ""}</div>
+          <div class="catalog-stats">${stats.join(" · ")}</div>
+        </div>
+      </div>
+    `);
+  }
+
+  function renderCatalog(state) {
+    const overlay = el(`
+      <div class="modal-overlay" data-action="catalog-backdrop">
+        <div class="modal-content catalog-modal">
+          <header class="modal-header">
+            <h2>Flower Catalog</h2>
+            <button class="modal-close" data-action="close-catalog" aria-label="Close">✕</button>
+          </header>
+          <section class="catalog-section">
+            <h3 class="catalog-section-title">Common Flowers</h3>
+            <div class="catalog-grid" data-section="common"></div>
+          </section>
+          <section class="catalog-section">
+            <h3 class="catalog-section-title">Rare Variants</h3>
+            <div class="catalog-grid" data-section="rare"></div>
+          </section>
+        </div>
+      </div>
+    `);
+
+    const commonGrid = overlay.querySelector("[data-section='common']");
+    Garden.FLOWERS.forEach(f => commonGrid.appendChild(renderCatalogCard(f, false, 0, 0)));
+
+    const rareGrid = overlay.querySelector("[data-section='rare']");
+    const counts = state.plantCounts || {};
+    const discovered = state.discovered || {};
+    Garden.RARE_FLOWERS.forEach(rare => {
+      const fullRare = Garden.flowerById(rare.id);
+      const isDiscovered = !!discovered[rare.id];
+      const progress = (counts[rare.parentId] || 0) % rare.interval;
+      rareGrid.appendChild(renderCatalogCard(fullRare, !isDiscovered, progress, rare.interval));
+    });
+
+    return overlay;
   }
 
   function renderGrid(state) {
@@ -147,6 +225,7 @@ window.Garden = window.Garden || {};
     app.appendChild(renderTopBar(state));
     app.appendChild(renderGrid(state));
     app.appendChild(renderShelf(state));
+    if (catalogOpen) app.appendChild(renderCatalog(state));
   }
 
   let currentState = null;
@@ -155,6 +234,28 @@ window.Garden = window.Garden || {};
     const app = document.getElementById("app");
     app.addEventListener("click", (ev) => {
       if (!currentState) return;
+
+      // Catalog: open / close / backdrop
+      if (ev.target.closest("[data-action='open-catalog']")) {
+        catalogOpen = true;
+        renderAll(currentState);
+        return;
+      }
+      if (ev.target.closest("[data-action='close-catalog']")) {
+        catalogOpen = false;
+        renderAll(currentState);
+        return;
+      }
+      const backdrop = ev.target.closest("[data-action='catalog-backdrop']");
+      if (backdrop && !ev.target.closest(".modal-content")) {
+        catalogOpen = false;
+        renderAll(currentState);
+        return;
+      }
+
+      // When the catalog is open, swallow other clicks (plot/seed/expand) so
+      // the background game isn't manipulated by accident.
+      if (catalogOpen) return;
 
       // Plot click
       const plotEl = ev.target.closest(".plot");
@@ -179,6 +280,14 @@ window.Garden = window.Garden || {};
         Garden.storage.save(currentState);
         renderAll(currentState);
         return;
+      }
+    });
+
+    // Esc closes the catalog
+    document.addEventListener("keydown", (ev) => {
+      if (ev.key === "Escape" && catalogOpen) {
+        catalogOpen = false;
+        if (currentState) renderAll(currentState);
       }
     });
   }
