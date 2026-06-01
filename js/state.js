@@ -42,5 +42,23 @@ window.Garden = window.Garden || {};
     return { ok: true };
   }
 
-  Garden.state = { createInitialState, getStage, plant };
+  function water(state, plotIdx) {
+    const plot = state.plots[plotIdx];
+    if (!plot) return { ok: false, reason: "empty" };
+    if (plot.stage !== "seed") return { ok: false, reason: "wrong-stage" };
+    plot.stage = "watered";
+    return { ok: true };
+  }
+
+  function sun(state, plotIdx) {
+    const plot = state.plots[plotIdx];
+    if (!plot) return { ok: false, reason: "empty" };
+    if (plot.stage !== "watered") return { ok: false, reason: "wrong-stage" };
+    const flower = Garden.flowerById(plot.flowerId);
+    plot.stage = "sunned";
+    plot.bloomAt = Date.now() + flower.growMs;
+    return { ok: true };
+  }
+
+  Garden.state = { createInitialState, getStage, plant, water, sun };
 })(window.Garden);
