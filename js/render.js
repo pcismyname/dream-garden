@@ -116,6 +116,8 @@ window.Garden = window.Garden || {};
   }
 
   function renderAll(state) {
+    currentState = state;
+
     // Ensure selectedSeedId is still unlocked; otherwise pick the first unlocked.
     const selectedFlower = Garden.flowerById(selectedSeedId);
     if (!selectedFlower || state.level < selectedFlower.levelReq) {
@@ -130,8 +132,61 @@ window.Garden = window.Garden || {};
     app.appendChild(renderShelf(state));
   }
 
+  let currentState = null;
+
+  function setupHandlers() {
+    const app = document.getElementById("app");
+    app.addEventListener("click", (ev) => {
+      if (!currentState) return;
+
+      // Plot click
+      const plotEl = ev.target.closest(".plot");
+      if (plotEl) {
+        const idx = Number(plotEl.dataset.idx);
+        handlePlotClick(idx);
+        return;
+      }
+
+      // Seed shelf click
+      const seedEl = ev.target.closest(".seed-card");
+      if (seedEl && !seedEl.classList.contains("locked")) {
+        selectedSeedId = seedEl.dataset.flowerId;
+        renderAll(currentState);
+        return;
+      }
+
+      // Expand button
+      const expandBtn = ev.target.closest("[data-action='expand']");
+      if (expandBtn && !expandBtn.disabled) {
+        Garden.state.expandGrid(currentState);
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+    });
+  }
+
+  function handlePlotClick(idx) {
+    const state = currentState;
+    const plot = state.plots[idx];
+    const now = Date.now();
+
+    if (!plot) {
+      if (!selectedSeedId) return;
+      Garden.state.plant(state, idx, selectedSeedId);
+    } else {
+      const stage = Garden.state.getStage(plot, now);
+      if (stage === "seed") Garden.state.water(state, idx);
+      else if (stage === "watered") Garden.state.sun(state, idx);
+      else if (stage === "bloomed") Garden.state.harvest(state, idx);
+      // growing → no-op
+    }
+    Garden.storage.save(state);
+    renderAll(state);
+  }
+
   Garden.render = {
-    renderAll, renderTopBar, renderGrid, renderShelf,
+    renderAll, renderTopBar, renderGrid, renderShelf, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
     getSelectedSeedId: () => selectedSeedId,
   };
