@@ -1,0 +1,1 @@
+window.Garden = window.Garden || {};
