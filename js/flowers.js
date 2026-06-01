@@ -9,6 +9,30 @@ window.Garden.FLOWERS = [
   { id: "calceolaria", name: "Calceolaria", levelReq: 14, seedCost: 450, sellPrice: 1000, growMs: 120000 },
 ];
 
+// Rare variants: spawned automatically on every Nth planting of the parent flower.
+// They cannot be bought — only grown by planting the parent species.
+window.Garden.RARE_FLOWERS = [
+  { id: "daisy_pink",       parentId: "daisy",       name: "Pink Daisy",       sellPrice: 30,   interval: 16 },
+  { id: "tulip_purple",     parentId: "tulip",       name: "Purple Tulip",     sellPrice: 90,   interval: 16 },
+  { id: "rose_white",       parentId: "rose",        name: "White Rose",       sellPrice: 225,  interval: 16 },
+  { id: "jasmine_purple",   parentId: "jasmine",     name: "Purple Jasmine",   sellPrice: 500,  interval: 16 },
+  { id: "sunflower_orange", parentId: "sunflower",   name: "Orange Sunflower", sellPrice: 1125, interval: 16 },
+  { id: "calceolaria_red",  parentId: "calceolaria", name: "Red Calceolaria",  sellPrice: 2500, interval: 16 },
+];
+
 window.Garden.flowerById = function (id) {
-  return window.Garden.FLOWERS.find(f => f.id === id) || null;
+  const normal = window.Garden.FLOWERS.find(f => f.id === id);
+  if (normal) return normal;
+  const rare = window.Garden.RARE_FLOWERS.find(r => r.id === id);
+  if (rare) {
+    const parent = window.Garden.FLOWERS.find(f => f.id === rare.parentId);
+    // Merge: rare inherits parent's growMs / levelReq, overrides name + sellPrice.
+    // seedCost is preserved from parent but rares aren't directly plantable.
+    return Object.assign({}, parent, rare, { rare: true });
+  }
+  return null;
+};
+
+window.Garden.rareForParent = function (parentId) {
+  return window.Garden.RARE_FLOWERS.find(r => r.parentId === parentId) || null;
 };

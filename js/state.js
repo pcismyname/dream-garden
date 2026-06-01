@@ -11,17 +11,26 @@ window.Garden = window.Garden || {};
       level: 1,
       gridSize: 3,
       plots: new Array(9).fill(null),
+      plantCounts: {},   // { flowerId: int } — counts plantings of NORMAL flowers
+      discovered: {},    // { rareFlowerId: true } — rares the player has grown
     };
   }
 
-  // Returns "seed" | "watered" | "growing" | "bloomed" for a non-null plot.
+  // Returns "seed" | "watered" | "growing" | "bloomed" | "wilted" for a non-null plot.
+  // Stage progression: seed → watered → sunned → (timer) → growing → bloomed → wilted.
+  // Wilt window equals the flower's grow time (per source 1's rose example: 4h grow, 4h wilt).
   function getStage(plot, now) {
     if (!plot) return null;
     if (plot.stage === "seed") return "seed";
     if (plot.stage === "watered") return "watered";
     // plot.stage === "sunned"
-    if (plot.bloomAt == null) return "growing"; // defensive; shouldn't happen
-    return now >= plot.bloomAt ? "bloomed" : "growing";
+    if (plot.bloomAt == null) return "growing"; // defensive
+    if (now < plot.bloomAt) return "growing";
+    const flower = Garden.flowerById(plot.flowerId);
+    if (!flower) return "bloomed"; // defensive
+    const wiltAt = plot.bloomAt + flower.growMs;
+    if (now < wiltAt) return "bloomed";
+    return "wilted";
   }
 
   function plant(state, plotIdx, flowerId) {
@@ -29,17 +38,34 @@ window.Garden = window.Garden || {};
     if (state.plots[plotIdx] !== null) return { ok: false, reason: "occupied" };
     const flower = Garden.flowerById(flowerId);
     if (!flower) return { ok: false, reason: "unknown-flower" };
+    if (flower.rare) return { ok: false, reason: "rare-not-plantable" };
     if (state.level < flower.levelReq) return { ok: false, reason: "locked" };
     if (state.coins < flower.seedCost) return { ok: false, reason: "broke" };
 
     state.coins -= flower.seedCost;
+
+    // Track plantings for rare-spawn logic.
+    if (!state.plantCounts) state.plantCounts = {};
+    state.plantCounts[flowerId] = (state.plantCounts[flowerId] || 0) + 1;
+
+    // Every Nth planting of a flower with a rare cousin spawns the rare instead.
+    let actualFlowerId = flowerId;
+    let rareSpawned = false;
+    const rare = Garden.rareForParent(flowerId);
+    if (rare && state.plantCounts[flowerId] % rare.interval === 0) {
+      actualFlowerId = rare.id;
+      if (!state.discovered) state.discovered = {};
+      state.discovered[rare.id] = true;
+      rareSpawned = true;
+    }
+
     state.plots[plotIdx] = {
-      flowerId: flower.id,
+      flowerId: actualFlowerId,
       stage: "seed",
       plantedAt: Date.now(),
       bloomAt: null,
     };
-    return { ok: true };
+    return { ok: true, rareSpawned };
   }
 
   function water(state, plotIdx) {
@@ -81,7 +107,17 @@ window.Garden = window.Garden || {};
       state.level += 1;
       leveledUp = true;
     }
-    return { ok: true, leveledUp };
+    return { ok: true, leveledUp, rare: !!flower.rare };
+  }
+
+  // Click a wilted plot to compost it. No reward — seed cost is already lost.
+  function clear(state, plotIdx) {
+    const plot = state.plots[plotIdx];
+    if (!plot) return { ok: false, reason: "empty" };
+    const stage = getStage(plot, Date.now());
+    if (stage !== "wilted") return { ok: false, reason: "not-wilted" };
+    state.plots[plotIdx] = null;
+    return { ok: true };
   }
 
   const GRID_EXPANSIONS = [
@@ -107,7 +143,7 @@ window.Garden = window.Garden || {};
   }
 
   Garden.state = {
-    createInitialState, getStage, plant, water, sun, harvest,
+    createInitialState, getStage, plant, water, sun, harvest, clear,
     xpForNextLevel, expandGrid, nextExpansion, GRID_EXPANSIONS,
   };
 })(window.Garden);
