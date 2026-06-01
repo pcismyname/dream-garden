@@ -60,5 +60,29 @@ window.Garden = window.Garden || {};
     return { ok: true };
   }
 
-  Garden.state = { createInitialState, getStage, plant, water, sun };
+  function xpForNextLevel(level) {
+    return level * level * 50;
+  }
+
+  function harvest(state, plotIdx) {
+    const plot = state.plots[plotIdx];
+    if (!plot) return { ok: false, reason: "empty" };
+    const stage = getStage(plot, Date.now());
+    if (stage !== "bloomed") return { ok: false, reason: "not-ready" };
+    const flower = Garden.flowerById(plot.flowerId);
+
+    state.coins += flower.sellPrice;
+    state.xp += Math.floor(flower.sellPrice / 5);
+    state.plots[plotIdx] = null;
+
+    let leveledUp = false;
+    while (state.xp >= xpForNextLevel(state.level)) {
+      state.xp -= xpForNextLevel(state.level);
+      state.level += 1;
+      leveledUp = true;
+    }
+    return { ok: true, leveledUp };
+  }
+
+  Garden.state = { createInitialState, getStage, plant, water, sun, harvest, xpForNextLevel };
 })(window.Garden);
