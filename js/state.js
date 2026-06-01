@@ -24,5 +24,23 @@ window.Garden = window.Garden || {};
     return now >= plot.bloomAt ? "bloomed" : "growing";
   }
 
-  Garden.state = { createInitialState, getStage };
+  function plant(state, plotIdx, flowerId) {
+    if (plotIdx < 0 || plotIdx >= state.plots.length) return { ok: false, reason: "bad-index" };
+    if (state.plots[plotIdx] !== null) return { ok: false, reason: "occupied" };
+    const flower = Garden.flowerById(flowerId);
+    if (!flower) return { ok: false, reason: "unknown-flower" };
+    if (state.level < flower.levelReq) return { ok: false, reason: "locked" };
+    if (state.coins < flower.seedCost) return { ok: false, reason: "broke" };
+
+    state.coins -= flower.seedCost;
+    state.plots[plotIdx] = {
+      flowerId: flower.id,
+      stage: "seed",
+      plantedAt: Date.now(),
+      bloomAt: null,
+    };
+    return { ok: true };
+  }
+
+  Garden.state = { createInitialState, getStage, plant };
 })(window.Garden);
