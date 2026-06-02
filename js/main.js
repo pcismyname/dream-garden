@@ -65,6 +65,12 @@ window.Garden = window.Garden || {};
     if (!Array.isArray(state.decorations) || state.decorations.length !== Garden.DECORATION_SLOTS) {
       state.decorations = new Array(Garden.DECORATION_SLOTS).fill(null);
     }
+    if (!Array.isArray(state.ownedPots) || state.ownedPots.length === 0) {
+      state.ownedPots = [Garden.DEFAULT_POT];
+    }
+    if (!state.activePotId || !Garden.potById(state.activePotId)) {
+      state.activePotId = Garden.DEFAULT_POT;
+    }
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
     lastStageSig = stageSignature(state, Date.now());

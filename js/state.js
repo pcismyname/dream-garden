@@ -16,9 +16,31 @@ window.Garden = window.Garden || {};
       quests: [],
       settings: { floatingNumbers: true },
       decorations: new Array(Garden.DECORATION_SLOTS).fill(null),
+      ownedPots: [Garden.DEFAULT_POT],
+      activePotId: Garden.DEFAULT_POT,
     };
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
+  }
+
+  function buyPot(state, potId) {
+    const pot = Garden.potById(potId);
+    if (!pot) return { ok: false, reason: "unknown" };
+    if (state.level < pot.levelReq) return { ok: false, reason: "locked" };
+    if (!Array.isArray(state.ownedPots)) state.ownedPots = [Garden.DEFAULT_POT];
+    if (state.ownedPots.includes(potId)) return { ok: false, reason: "already-owned" };
+    if (state.coins < pot.cost) return { ok: false, reason: "broke" };
+    state.coins -= pot.cost;
+    state.ownedPots.push(potId);
+    return { ok: true };
+  }
+
+  function setActivePot(state, potId) {
+    if (!Array.isArray(state.ownedPots) || !state.ownedPots.includes(potId)) {
+      return { ok: false, reason: "not-owned" };
+    }
+    state.activePotId = potId;
+    return { ok: true };
   }
 
   function buyDecoration(state, decorationId) {
@@ -218,5 +240,6 @@ window.Garden = window.Garden || {};
     xpForNextLevel, expandGrid, nextExpansion, GRID_EXPANSIONS,
     generateQuest,
     buyDecoration, removeDecoration,
+    buyPot, setActivePot,
   };
 })(window.Garden);
