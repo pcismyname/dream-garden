@@ -38,7 +38,10 @@ window.Garden = window.Garden || {};
         <div class="topbar-right">
           <span>${totalPlots} plots</span>
           ${expandBtnHtml}
-          <button class="icon-btn" data-action="open-catalog">Catalog</button>
+          <button class="icon-btn" data-action="open-catalog" title="Flower Catalog" aria-label="Open flower catalog">
+            ${Garden.svg.BOOK_ICON}
+            <span>Catalog</span>
+          </button>
         </div>
       </div>
     `);
@@ -171,6 +174,38 @@ window.Garden = window.Garden || {};
     return wrap;
   }
 
+  function renderQuests(state) {
+    const quests = (state.quests || []);
+    if (quests.length === 0) return null;
+
+    const wrap = el(`
+      <div class="quests-bar">
+        <div class="quests-label">Orders</div>
+        <div class="quests-list"></div>
+      </div>
+    `);
+    const list = wrap.querySelector(".quests-list");
+
+    quests.forEach(q => {
+      const flower = Garden.flowerById(q.flowerId);
+      if (!flower) return; // defensive
+      const pct = Math.min(100, Math.floor((q.progress / q.target) * 100));
+      const card = el(`
+        <div class="quest-card">
+          <div class="quest-icon">${Garden.svg.flowerIcon(q.flowerId)}</div>
+          <div class="quest-info">
+            <div class="quest-text">Deliver ${q.target} ${flower.name}${q.target > 1 ? "s" : ""}</div>
+            <div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
+            <div class="quest-count">${q.progress}/${q.target}</div>
+          </div>
+        </div>
+      `);
+      list.appendChild(card);
+    });
+
+    return wrap;
+  }
+
   function renderShelf(state) {
     const wrap = el(`
       <div class="shelf">
@@ -223,6 +258,8 @@ window.Garden = window.Garden || {};
     const app = document.getElementById("app");
     app.innerHTML = "";
     app.appendChild(renderTopBar(state));
+    const questsEl = renderQuests(state);
+    if (questsEl) app.appendChild(questsEl);
     app.appendChild(renderGrid(state));
     app.appendChild(renderShelf(state));
     if (catalogOpen) app.appendChild(renderCatalog(state));
@@ -313,7 +350,7 @@ window.Garden = window.Garden || {};
   }
 
   Garden.render = {
-    renderAll, renderTopBar, renderGrid, renderShelf, setupHandlers,
+    renderAll, renderTopBar, renderGrid, renderShelf, renderQuests, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
     getSelectedSeedId: () => selectedSeedId,
   };
