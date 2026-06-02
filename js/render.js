@@ -10,6 +10,7 @@ window.Garden = window.Garden || {};
   let selectedSeedId = "daisy";
   let catalogOpen = false;
   let settingsOpen = false;
+  let shopOpen = false;
 
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
@@ -39,6 +40,10 @@ window.Garden = window.Garden || {};
         <div class="topbar-right">
           <span>${totalPlots} plots</span>
           ${expandBtnHtml}
+          <button class="icon-btn" data-action="open-shop" title="Decoration Shop" aria-label="Open shop">
+            ${Garden.svg.SHOP_ICON}
+            <span>Shop</span>
+          </button>
           <button class="icon-btn" data-action="open-catalog" title="Flower Catalog" aria-label="Open flower catalog">
             ${Garden.svg.BOOK_ICON}
             <span>Catalog</span>
@@ -185,6 +190,108 @@ window.Garden = window.Garden || {};
     return name + "s";
   }
 
+  function renderDecorationZone(state) {
+    const slots = state.decorations || [];
+    if (slots.length === 0) return null;
+
+    const wrap = el(`<div class="deco-zone"></div>`);
+    for (let i = 0; i < slots.length; i++) {
+      const decId = slots[i];
+      const slotEl = document.createElement("div");
+      slotEl.className = "deco-slot" + (decId ? " filled" : " empty");
+      slotEl.dataset.slotIdx = i;
+      if (decId) {
+        slotEl.innerHTML = Garden.svg.decorationSvg(decId);
+      } else {
+        slotEl.innerHTML = `<div class="deco-empty-mark">+</div>`;
+      }
+      wrap.appendChild(slotEl);
+    }
+    return wrap;
+  }
+
+  function renderShop(state) {
+    const overlay = el(`
+      <div class="modal-overlay" data-action="shop-backdrop">
+        <div class="modal-content shop-modal">
+          <header class="modal-header">
+            <h2>Decoration Shop</h2>
+            <button class="modal-close" data-action="close-shop" aria-label="Close">✕</button>
+          </header>
+          <section class="shop-section">
+            <h3 class="catalog-section-title">For Sale</h3>
+            <div class="shop-grid" data-section="for-sale"></div>
+          </section>
+          <section class="shop-section">
+            <h3 class="catalog-section-title">Your Decorations</h3>
+            <div class="shop-grid" data-section="placed"></div>
+          </section>
+        </div>
+      </div>
+    `);
+
+    // For Sale section
+    const saleGrid = overlay.querySelector("[data-section='for-sale']");
+    const placedCount = (state.decorations || []).filter(d => d != null).length;
+    const slotsFull = placedCount >= Garden.DECORATION_SLOTS;
+
+    Garden.DECORATIONS.forEach(dec => {
+      const locked = state.level < dec.levelReq;
+      const unaffordable = !locked && state.coins < dec.cost;
+      const canBuy = !locked && !unaffordable && !slotsFull;
+
+      let action;
+      if (locked) {
+        action = `<span class="shop-status locked">🔒 Lv ${dec.levelReq}</span>`;
+      } else if (slotsFull) {
+        action = `<span class="shop-status">No empty slot</span>`;
+      } else {
+        action = `<button class="shop-buy-btn" data-action="buy-decoration" data-decoration-id="${dec.id}" ${canBuy ? "" : "disabled"}>
+          Buy <span class="mini-coin"></span>${dec.cost}
+        </button>`;
+      }
+
+      const card = el(`
+        <div class="shop-card ${locked ? "locked-card" : ""} ${unaffordable && !locked ? "unaffordable" : ""}">
+          <div class="shop-art">${Garden.svg.decorationSvg(dec.id)}</div>
+          <div class="shop-info">
+            <div class="shop-name">${dec.name}</div>
+            ${action}
+          </div>
+        </div>
+      `);
+      saleGrid.appendChild(card);
+    });
+
+    // Placed section
+    const placedGrid = overlay.querySelector("[data-section='placed']");
+    const placed = state.decorations || [];
+    if (placed.every(d => d == null)) {
+      placedGrid.appendChild(el(`<div class="shop-empty">No decorations placed yet. Buy some above!</div>`));
+    } else {
+      placed.forEach((decId, idx) => {
+        if (decId == null) return;
+        const dec = Garden.decorationById(decId);
+        if (!dec) return;
+        const refund = Math.floor(dec.cost * Garden.DECORATION_REFUND_PCT);
+        const card = el(`
+          <div class="shop-card placed-card">
+            <div class="shop-art">${Garden.svg.decorationSvg(decId)}</div>
+            <div class="shop-info">
+              <div class="shop-name">${dec.name}</div>
+              <button class="shop-remove-btn" data-action="remove-decoration" data-slot-idx="${idx}">
+                Remove (+<span class="mini-coin"></span>${refund})
+              </button>
+            </div>
+          </div>
+        `);
+        placedGrid.appendChild(card);
+      });
+    }
+
+    return overlay;
+  }
+
   function renderSettings(state) {
     const settings = state.settings || {};
     const overlay = el(`
@@ -295,10 +402,16 @@ window.Garden = window.Garden || {};
     app.appendChild(renderTopBar(state));
     const questsEl = renderQuests(state);
     if (questsEl) app.appendChild(questsEl);
-    app.appendChild(renderGrid(state));
+
+    const gardenEl = renderGrid(state);
+    const decoZone = renderDecorationZone(state);
+    if (decoZone) gardenEl.appendChild(decoZone);
+    app.appendChild(gardenEl);
+
     app.appendChild(renderShelf(state));
     if (catalogOpen) app.appendChild(renderCatalog(state));
     if (settingsOpen) app.appendChild(renderSettings(state));
+    if (shopOpen) app.appendChild(renderShop(state));
   }
 
   let currentState = null;
@@ -344,8 +457,49 @@ window.Garden = window.Garden || {};
         return;
       }
 
+      // Shop: open / close / backdrop / buy / remove
+      if (ev.target.closest("[data-action='open-shop']")) {
+        shopOpen = true;
+        renderAll(currentState);
+        return;
+      }
+      if (ev.target.closest("[data-action='close-shop']")) {
+        shopOpen = false;
+        renderAll(currentState);
+        return;
+      }
+      const shopBackdrop = ev.target.closest("[data-action='shop-backdrop']");
+      if (shopBackdrop && !ev.target.closest(".modal-content")) {
+        shopOpen = false;
+        renderAll(currentState);
+        return;
+      }
+      const buyBtn = ev.target.closest("[data-action='buy-decoration']");
+      if (buyBtn && !buyBtn.disabled) {
+        const decId = buyBtn.dataset.decorationId;
+        const result = Garden.state.buyDecoration(currentState, decId);
+        if (result.ok && Garden.fx) {
+          const dec = Garden.decorationById(decId);
+          Garden.fx.toast("Placed " + dec.name + ".", { variant: "level" });
+        }
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+      const removeBtn = ev.target.closest("[data-action='remove-decoration']");
+      if (removeBtn) {
+        const slot = Number(removeBtn.dataset.slotIdx);
+        const result = Garden.state.removeDecoration(currentState, slot);
+        if (result.ok && Garden.fx) {
+          Garden.fx.toast("Removed. Refunded " + result.refund + " coins.", { variant: "quest" });
+        }
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+
       // When any modal is open, swallow other clicks.
-      if (catalogOpen || settingsOpen) return;
+      if (catalogOpen || settingsOpen || shopOpen) return;
 
       // Plot click
       const plotEl = ev.target.closest(".plot");
@@ -378,6 +532,9 @@ window.Garden = window.Garden || {};
       if (ev.key !== "Escape") return;
       if (settingsOpen) {
         settingsOpen = false;
+        if (currentState) renderAll(currentState);
+      } else if (shopOpen) {
+        shopOpen = false;
         if (currentState) renderAll(currentState);
       } else if (catalogOpen) {
         catalogOpen = false;
@@ -463,7 +620,8 @@ window.Garden = window.Garden || {};
   }
 
   Garden.render = {
-    renderAll, renderTopBar, renderGrid, renderShelf, renderQuests, setupHandlers,
+    renderAll, renderTopBar, renderGrid, renderShelf, renderQuests,
+    renderDecorationZone, renderShop, renderSettings, renderCatalog, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
     getSelectedSeedId: () => selectedSeedId,
   };
