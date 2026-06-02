@@ -4,7 +4,7 @@ window.Garden = window.Garden || {};
   const VERSION = 1;
 
   function createInitialState() {
-    return {
+    const s = {
       version: VERSION,
       coins: 100,
       xp: 0,
@@ -13,7 +13,20 @@ window.Garden = window.Garden || {};
       plots: new Array(9).fill(null),
       plantCounts: {},   // { flowerId: int } — counts plantings of NORMAL flowers
       discovered: {},    // { rareFlowerId: true } — rares the player has grown
+      quests: [],
     };
+    for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
+    return s;
+  }
+
+  // Random quest: deliver N of an unlocked flower. Always picks from currently-unlocked
+  // normal flowers (not rares — those can't be bought).
+  function generateQuest(state) {
+    const unlocked = Garden.FLOWERS.filter(f => state.level >= f.levelReq);
+    const pool = unlocked.length > 0 ? unlocked : [Garden.FLOWERS[0]]; // defensive
+    const flower = pool[Math.floor(Math.random() * pool.length)];
+    const target = 2 + Math.floor(Math.random() * 4); // 2-5 inclusive
+    return { flowerId: flower.id, target, progress: 0 };
   }
 
   // Returns "seed" | "watered" | "growing" | "bloomed" | "wilted" for a non-null plot.
@@ -101,13 +114,33 @@ window.Garden = window.Garden || {};
     state.xp += Math.floor(flower.sellPrice / 5);
     state.plots[plotIdx] = null;
 
+    // Quest progress: harvesting a rare counts toward its parent's quest.
+    // Each harvest ticks at most one matching incomplete quest (the first found).
+    if (!state.quests) state.quests = [];
+    const parentId = flower.parentId || flower.id;
+    let questCompleted = null;
+    const qIdx = state.quests.findIndex(q => q.flowerId === parentId && q.progress < q.target);
+    if (qIdx >= 0) {
+      state.quests[qIdx].progress += 1;
+      if (state.quests[qIdx].progress >= state.quests[qIdx].target) {
+        const q = state.quests[qIdx];
+        const qFlower = Garden.flowerById(q.flowerId);
+        const coinBonus = Math.round(q.target * qFlower.sellPrice * 0.5);
+        const xpBonus = 10 + q.target * Math.floor(qFlower.sellPrice / 10);
+        state.coins += coinBonus;
+        state.xp += xpBonus;
+        questCompleted = { flowerId: q.flowerId, target: q.target, coinBonus, xpBonus };
+        state.quests[qIdx] = generateQuest(state);
+      }
+    }
+
     let leveledUp = false;
     while (state.xp >= xpForNextLevel(state.level)) {
       state.xp -= xpForNextLevel(state.level);
       state.level += 1;
       leveledUp = true;
     }
-    return { ok: true, leveledUp, rare: !!flower.rare };
+    return { ok: true, leveledUp, rare: !!flower.rare, questCompleted };
   }
 
   // Click a wilted plot to compost it. No reward — seed cost is already lost.
@@ -145,5 +178,6 @@ window.Garden = window.Garden || {};
   Garden.state = {
     createInitialState, getStage, plant, water, sun, harvest, clear,
     xpForNextLevel, expandGrid, nextExpansion, GRID_EXPANSIONS,
+    generateQuest,
   };
 })(window.Garden);
