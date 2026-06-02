@@ -174,6 +174,13 @@ window.Garden = window.Garden || {};
     return wrap;
   }
 
+  function pluralize(name, count) {
+    if (count === 1) return name;
+    // consonant + y → ies (Daisy → Daisies). Otherwise just append s.
+    if (/[^aeiou]y$/i.test(name)) return name.slice(0, -1) + "ies";
+    return name + "s";
+  }
+
   function renderQuests(state) {
     const quests = (state.quests || []);
     if (quests.length === 0) return null;
@@ -194,7 +201,7 @@ window.Garden = window.Garden || {};
         <div class="quest-card">
           <div class="quest-icon">${Garden.svg.flowerIcon(q.flowerId)}</div>
           <div class="quest-info">
-            <div class="quest-text">Deliver ${q.target} ${flower.name}${q.target > 1 ? "s" : ""}</div>
+            <div class="quest-text">Deliver ${q.target} ${pluralize(flower.name, q.target)}</div>
             <div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
             <div class="quest-count">${q.progress}/${q.target}</div>
           </div>
