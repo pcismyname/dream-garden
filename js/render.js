@@ -8,6 +8,7 @@ window.Garden = window.Garden || {};
   }
 
   let selectedSeedId = "daisy";
+  let selectedPotionId = null;  // when set, next plot click applies this potion
   let catalogOpen = false;
   let settingsOpen = false;
   let shopOpen = false;
@@ -198,6 +199,42 @@ window.Garden = window.Garden || {};
     return name + "s";
   }
 
+  function renderInventory(state) {
+    const inv = state.inventory || {};
+    // Only show owned potions (count > 0). If nothing owned, hide the bar entirely.
+    const owned = Garden.POTIONS.filter(p => (inv[p.id] || 0) > 0);
+    if (owned.length === 0) return null;
+
+    const hint = selectedPotionId
+      ? "Click a plot to apply the selected potion. (Esc to cancel)"
+      : "Click a potion to use it on a plot";
+
+    const wrap = el(`
+      <div class="inventory-bar ${selectedPotionId ? 'use-mode' : ''}">
+        <div class="inventory-label">Potions — ${hint}</div>
+        <div class="inventory-list"></div>
+      </div>
+    `);
+    const list = wrap.querySelector(".inventory-list");
+
+    owned.forEach(potion => {
+      const count = inv[potion.id] || 0;
+      const isSelected = potion.id === selectedPotionId;
+      const card = el(`
+        <div class="potion-card ${isSelected ? 'selected' : ''}" data-potion-id="${potion.id}" title="${potion.description}">
+          <div class="potion-icon">${Garden.svg.potionSvg(potion.id)}</div>
+          <div class="potion-info">
+            <div class="potion-name">${potion.name}</div>
+            <div class="potion-count">×${count}</div>
+          </div>
+        </div>
+      `);
+      list.appendChild(card);
+    });
+
+    return wrap;
+  }
+
   function renderDecorationZone(state) {
     const slots = state.decorations || [];
     if (slots.length === 0) return null;
@@ -229,6 +266,10 @@ window.Garden = window.Garden || {};
           <section class="shop-section">
             <h3 class="catalog-section-title">For Sale</h3>
             <div class="shop-grid" data-section="for-sale"></div>
+          </section>
+          <section class="shop-section">
+            <h3 class="catalog-section-title">Potions</h3>
+            <div class="shop-grid" data-section="potions"></div>
           </section>
           <section class="shop-section">
             <h3 class="catalog-section-title">Pot Skins</h3>
@@ -273,6 +314,37 @@ window.Garden = window.Garden || {};
         </div>
       `);
       saleGrid.appendChild(card);
+    });
+
+    // Potions section
+    const potionsGrid = overlay.querySelector("[data-section='potions']");
+    const inv = state.inventory || {};
+    Garden.POTIONS.forEach(potion => {
+      const locked = state.level < potion.levelReq;
+      const unaffordable = !locked && state.coins < potion.cost;
+      const canBuy = !locked && !unaffordable;
+      const owned = inv[potion.id] || 0;
+
+      let action;
+      if (locked) {
+        action = `<span class="shop-status locked">🔒 Lv ${potion.levelReq}</span>`;
+      } else {
+        action = `<button class="shop-buy-btn" data-action="buy-potion" data-potion-id="${potion.id}" ${canBuy ? "" : "disabled"}>
+          Buy <span class="mini-coin"></span>${potion.cost}
+        </button>`;
+      }
+
+      const card = el(`
+        <div class="shop-card ${locked ? "locked-card" : ""} ${unaffordable && !locked ? "unaffordable" : ""}">
+          <div class="shop-art">${Garden.svg.potionSvg(potion.id)}</div>
+          <div class="shop-info">
+            <div class="shop-name">${potion.name} ${owned > 0 ? `<span class="owned-count">×${owned}</span>` : ""}</div>
+            <div class="potion-desc">${potion.description}</div>
+            ${action}
+          </div>
+        </div>
+      `);
+      potionsGrid.appendChild(card);
     });
 
     // Pot Skins section
@@ -454,7 +526,12 @@ window.Garden = window.Garden || {};
     const gardenEl = renderGrid(state);
     const decoZone = renderDecorationZone(state);
     if (decoZone) gardenEl.appendChild(decoZone);
+    // Mark the grid so CSS can show a "target-acquired" cursor in potion use mode.
+    if (selectedPotionId) gardenEl.classList.add("potion-use-mode");
     app.appendChild(gardenEl);
+
+    const inventoryEl = renderInventory(state);
+    if (inventoryEl) app.appendChild(inventoryEl);
 
     app.appendChild(renderShelf(state));
     if (catalogOpen) app.appendChild(renderCatalog(state));
@@ -545,6 +622,19 @@ window.Garden = window.Garden || {};
         renderAll(currentState);
         return;
       }
+      const buyPotionBtn = ev.target.closest("[data-action='buy-potion']");
+      if (buyPotionBtn && !buyPotionBtn.disabled) {
+        const potionId = buyPotionBtn.dataset.potionId;
+        const result = Garden.state.buyPotion(currentState, potionId);
+        if (result.ok && Garden.fx) {
+          const potion = Garden.potionById(potionId);
+          Garden.fx.toast("Bought " + potion.name + ".", { variant: "level" });
+        }
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+
       const buyPotBtn = ev.target.closest("[data-action='buy-pot']");
       if (buyPotBtn && !buyPotBtn.disabled) {
         const potId = buyPotBtn.dataset.potId;
@@ -577,6 +667,15 @@ window.Garden = window.Garden || {};
       // When any modal is open, swallow other clicks.
       if (catalogOpen || settingsOpen || shopOpen) return;
 
+      // Potion inventory click — toggle use-mode
+      const potionEl = ev.target.closest(".potion-card");
+      if (potionEl) {
+        const potionId = potionEl.dataset.potionId;
+        selectedPotionId = (selectedPotionId === potionId) ? null : potionId;
+        renderAll(currentState);
+        return;
+      }
+
       // Plot click
       const plotEl = ev.target.closest(".plot");
       if (plotEl) {
@@ -585,10 +684,11 @@ window.Garden = window.Garden || {};
         return;
       }
 
-      // Seed shelf click
+      // Seed shelf click — selecting a seed cancels potion use mode
       const seedEl = ev.target.closest(".seed-card");
       if (seedEl && !seedEl.classList.contains("locked")) {
         selectedSeedId = seedEl.dataset.flowerId;
+        selectedPotionId = null;
         renderAll(currentState);
         return;
       }
@@ -603,7 +703,7 @@ window.Garden = window.Garden || {};
       }
     });
 
-    // Esc closes whichever modal is open
+    // Esc closes whichever modal is open, or cancels potion use mode
     document.addEventListener("keydown", (ev) => {
       if (ev.key !== "Escape") return;
       if (settingsOpen) {
@@ -614,6 +714,9 @@ window.Garden = window.Garden || {};
         if (currentState) renderAll(currentState);
       } else if (catalogOpen) {
         catalogOpen = false;
+        if (currentState) renderAll(currentState);
+      } else if (selectedPotionId) {
+        selectedPotionId = null;
         if (currentState) renderAll(currentState);
       }
     });
@@ -634,6 +737,27 @@ window.Garden = window.Garden || {};
     const state = currentState;
     const plot = state.plots[idx];
     const now = Date.now();
+
+    // Potion use mode takes precedence over the normal plant/water/sun/harvest flow.
+    if (selectedPotionId) {
+      const result = Garden.state.usePotion(state, idx, selectedPotionId);
+      if (result.ok) {
+        const potion = Garden.potionById(selectedPotionId);
+        if (Garden.fx) Garden.fx.toast((potion ? potion.name : "Potion") + " applied!", { variant: "level" });
+        selectedPotionId = null; // exit use mode on success
+      } else if (Garden.fx) {
+        // Stay in use mode — let the player click a valid target instead.
+        const msg = result.reason === "not-growing"
+          ? "Speed Potion only works on growing flowers."
+          : result.reason === "not-wilted"
+          ? "Revival Potion only works on wilted flowers."
+          : "Can't use here.";
+        Garden.fx.toast(msg, { variant: "quest" });
+      }
+      Garden.storage.save(state);
+      renderAll(state);
+      return;
+    }
 
     let harvestResult = null;
     let plotRect = null;
@@ -696,7 +820,7 @@ window.Garden = window.Garden || {};
   }
 
   Garden.render = {
-    renderAll, renderTopBar, renderGrid, renderShelf, renderQuests,
+    renderAll, renderTopBar, renderGrid, renderShelf, renderQuests, renderInventory,
     renderDecorationZone, renderShop, renderSettings, renderCatalog, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
     getSelectedSeedId: () => selectedSeedId,
