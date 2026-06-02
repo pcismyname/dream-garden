@@ -194,9 +194,9 @@ body {
   justify-content: center;
   user-select: none;
   transition: transform 0.08s, filter 0.12s;
-  filter: drop-shadow(0 2px 1px rgba(0,0,0,0.25));
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,0.15));
 }
-.plot:hover { transform: translateY(-1px); filter: drop-shadow(0 3px 2px rgba(0,0,0,0.35)) brightness(1.05); }
+.plot:hover { transform: translateY(-1px); filter: drop-shadow(0 2px 2px rgba(0,0,0,0.22)) brightness(1.04); }
 .plot:active { transform: translateY(1px); }
 
 .plot-pot {
@@ -208,14 +208,25 @@ body {
 .plot-content {
   position: relative;
   z-index: 1;
-  width: 60%;
-  height: 60%;
+  width: 62%;
+  height: 62%;
   display: flex;
   align-items: center;
   justify-content: center;
-  /* nudge upward so flower sits at the "opening" of the pot */
-  margin-top: -10%;
 }
+
+/* Dirt is a flat square — flower sits centered. */
+.plot[data-pot="dirt"] .plot-content {
+  width: 70%;
+  height: 70%;
+  margin-top: 0;
+}
+
+/* Pots have an opening near the top — nudge flower up so it appears at the rim. */
+.plot:not([data-pot="dirt"]) .plot-content {
+  margin-top: -14%;
+}
+
 .plot.wilted .plot-pot { filter: saturate(0.5) brightness(0.85); }
 
 .plot-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }

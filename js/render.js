@@ -139,6 +139,7 @@ window.Garden = window.Garden || {};
       const plotEl = document.createElement("div");
       plotEl.className = "plot";
       plotEl.dataset.idx = idx;
+      plotEl.dataset.pot = potId;
 
       // Layer the active pot SVG as the plot background.
       const potEl = document.createElement("div");

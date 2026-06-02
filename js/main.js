@@ -68,7 +68,13 @@ window.Garden = window.Garden || {};
     if (!Array.isArray(state.ownedPots) || state.ownedPots.length === 0) {
       state.ownedPots = [Garden.DEFAULT_POT];
     }
-    if (!state.activePotId || !Garden.potById(state.activePotId)) {
+    // v1.9 → v1.10: grandfather dirt into ownedPots so players who had
+    // terracotta as their old default also have the new default available.
+    if (!state.ownedPots.includes(Garden.DEFAULT_POT)) {
+      state.ownedPots.unshift(Garden.DEFAULT_POT);
+    }
+    if (!state.activePotId || !Garden.potById(state.activePotId) ||
+        !state.ownedPots.includes(state.activePotId)) {
       state.activePotId = Garden.DEFAULT_POT;
     }
     Garden.render.setupHandlers();

@@ -259,73 +259,70 @@ window.Garden = window.Garden || {};
   // ========================================================================
 
   const POT_SVGS = {
+    dirt: `
+      <svg viewBox="0 0 72 72" width="100%" height="100%">
+        <rect x="2" y="2" width="68" height="68" rx="10" fill="#9c5a2a" stroke="#5a3815" stroke-width="1"/>
+        <rect x="2" y="2" width="68" height="6" rx="10" fill="#a85f30" opacity="0.7"/>
+        <!-- subtle soil texture -->
+        <circle cx="18" cy="26" r="1.5" fill="#7a4a1f" opacity="0.5"/>
+        <circle cx="48" cy="32" r="1.2" fill="#7a4a1f" opacity="0.45"/>
+        <circle cx="30" cy="48" r="1.5" fill="#7a4a1f" opacity="0.5"/>
+        <circle cx="55" cy="55" r="1" fill="#7a4a1f" opacity="0.4"/>
+        <circle cx="20" cy="58" r="1.2" fill="#7a4a1f" opacity="0.45"/>
+        <circle cx="40" cy="20" r="1" fill="#7a4a1f" opacity="0.4"/>
+      </svg>`,
+
     terracotta: `
       <svg viewBox="0 0 72 72" width="100%" height="100%">
-        <path d="M 8 18 L 64 18 L 58 68 L 14 68 Z" fill="#9c5a2a" stroke="#5a3815" stroke-width="1"/>
-        <rect x="4" y="10" width="64" height="10" rx="2" fill="#a85f30" stroke="#5a3815" stroke-width="1"/>
-        <rect x="6" y="11" width="60" height="2" fill="#c97a4a" opacity="0.7"/>
-        <ellipse cx="36" cy="19" rx="28" ry="3" fill="#3a2810"/>
+        <path d="M 10 22 L 62 22 L 56 66 L 16 66 Z" fill="#9c5a2a" stroke="#5a3815" stroke-width="0.9"/>
+        <rect x="6" y="16" width="60" height="7" rx="2" fill="#a85f30" stroke="#5a3815" stroke-width="0.9"/>
+        <rect x="8" y="17" width="56" height="1.5" fill="#c97a4a" opacity="0.7"/>
+        <ellipse cx="36" cy="22" rx="25" ry="2.5" fill="#3a2810"/>
       </svg>`,
 
     barrel: `
       <svg viewBox="0 0 72 72" width="100%" height="100%">
-        <!-- body with rounded ends like a barrel -->
-        <path d="M 10 18 Q 6 22 6 30 L 8 60 Q 8 68 16 68 L 56 68 Q 64 68 64 60 L 66 30 Q 66 22 62 18 Z" fill="#a06834" stroke="#5a3815" stroke-width="1"/>
-        <!-- vertical plank lines -->
-        <line x1="20" y1="20" x2="20" y2="66" stroke="#5a3815" stroke-width="0.6"/>
-        <line x1="30" y1="20" x2="30" y2="66" stroke="#5a3815" stroke-width="0.6"/>
-        <line x1="42" y1="20" x2="42" y2="66" stroke="#5a3815" stroke-width="0.6"/>
-        <line x1="52" y1="20" x2="52" y2="66" stroke="#5a3815" stroke-width="0.6"/>
-        <!-- metal bands -->
-        <path d="M 7 26 Q 36 28 65 26" stroke="#5a5a5a" stroke-width="3" fill="none"/>
-        <path d="M 7 58 Q 36 60 65 58" stroke="#5a5a5a" stroke-width="3" fill="none"/>
-        <!-- dirt at top -->
-        <ellipse cx="36" cy="20" rx="28" ry="3" fill="#3a2810"/>
+        <path d="M 12 22 Q 8 26 8 32 L 10 60 Q 10 66 16 66 L 56 66 Q 62 66 62 60 L 64 32 Q 64 26 60 22 Z" fill="#a06834" stroke="#5a3815" stroke-width="0.9"/>
+        <line x1="20" y1="24" x2="20" y2="64" stroke="#5a3815" stroke-width="0.5"/>
+        <line x1="30" y1="24" x2="30" y2="64" stroke="#5a3815" stroke-width="0.5"/>
+        <line x1="42" y1="24" x2="42" y2="64" stroke="#5a3815" stroke-width="0.5"/>
+        <line x1="52" y1="24" x2="52" y2="64" stroke="#5a3815" stroke-width="0.5"/>
+        <path d="M 9 30 Q 36 32 63 30" stroke="#6a6a6a" stroke-width="2.5" fill="none"/>
+        <path d="M 9 58 Q 36 60 63 58" stroke="#6a6a6a" stroke-width="2.5" fill="none"/>
+        <ellipse cx="36" cy="22" rx="26" ry="2.5" fill="#3a2810"/>
       </svg>`,
 
     ceramic: `
       <svg viewBox="0 0 72 72" width="100%" height="100%">
-        <!-- rounded vase body -->
-        <path d="M 12 22 Q 6 30 8 42 L 12 60 Q 14 68 22 68 L 50 68 Q 58 68 60 60 L 64 42 Q 66 30 60 22 Z" fill="#4a78c4" stroke="#1a3a7a" stroke-width="1"/>
-        <!-- glossy white highlight -->
-        <path d="M 16 28 Q 14 36 18 50" stroke="#a8c8ee" stroke-width="3" fill="none" stroke-linecap="round" opacity="0.8"/>
-        <!-- rim -->
-        <ellipse cx="36" cy="20" rx="26" ry="5" fill="#3a5a9a" stroke="#1a3a7a" stroke-width="0.8"/>
-        <ellipse cx="36" cy="19" rx="24" ry="3" fill="#3a2810"/>
+        <path d="M 14 24 Q 8 30 10 42 L 14 60 Q 16 66 22 66 L 50 66 Q 56 66 58 60 L 62 42 Q 64 30 58 24 Z" fill="#4a78c4" stroke="#1a3a7a" stroke-width="0.9"/>
+        <path d="M 18 30 Q 16 36 20 48" stroke="#a8c8ee" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+        <ellipse cx="36" cy="22" rx="24" ry="3.5" fill="#3a5a9a" stroke="#1a3a7a" stroke-width="0.7"/>
+        <ellipse cx="36" cy="22" rx="22" ry="2" fill="#3a2810"/>
       </svg>`,
 
     stone: `
       <svg viewBox="0 0 72 72" width="100%" height="100%">
-        <!-- rough trapezoid body -->
-        <path d="M 8 18 L 64 18 L 60 68 L 12 68 Z" fill="#8a8a85" stroke="#4a4a45" stroke-width="1"/>
-        <rect x="4" y="10" width="64" height="10" rx="1" fill="#9a9a95" stroke="#4a4a45" stroke-width="1"/>
-        <!-- pebbly texture spots -->
-        <circle cx="18" cy="35" r="2"   fill="#6a6a65"/>
-        <circle cx="28" cy="50" r="1.5" fill="#7a7a75"/>
-        <circle cx="45" cy="40" r="2"   fill="#6a6a65"/>
-        <circle cx="55" cy="55" r="1.5" fill="#7a7a75"/>
-        <circle cx="35" cy="28" r="1"   fill="#6a6a65"/>
-        <circle cx="22" cy="60" r="1.2" fill="#7a7a75"/>
-        <circle cx="50" cy="30" r="1.5" fill="#6a6a65"/>
-        <!-- dirt at top -->
-        <ellipse cx="36" cy="19" rx="28" ry="3" fill="#3a2810"/>
+        <path d="M 10 22 L 62 22 L 58 66 L 14 66 Z" fill="#8a8a85" stroke="#4a4a45" stroke-width="0.9"/>
+        <rect x="6" y="16" width="60" height="7" rx="1" fill="#9a9a95" stroke="#4a4a45" stroke-width="0.9"/>
+        <circle cx="20" cy="38" r="1.5" fill="#6a6a65"/>
+        <circle cx="28" cy="52" r="1.2" fill="#7a7a75"/>
+        <circle cx="45" cy="42" r="1.5" fill="#6a6a65"/>
+        <circle cx="52" cy="56" r="1.2" fill="#7a7a75"/>
+        <circle cx="35" cy="32" r="1" fill="#6a6a65"/>
+        <circle cx="48" cy="32" r="1.2" fill="#6a6a65"/>
+        <ellipse cx="36" cy="22" rx="26" ry="2.5" fill="#3a2810"/>
       </svg>`,
 
     vase: `
       <svg viewBox="0 0 72 72" width="100%" height="100%">
-        <!-- curvy vase body, cream -->
-        <path d="M 18 22 Q 4 32 12 50 Q 14 66 22 68 L 50 68 Q 58 66 60 50 Q 68 32 54 22 Z" fill="#f5e4c5" stroke="#7a5e2a" stroke-width="1"/>
-        <!-- gold rim on top -->
-        <rect x="14" y="12" width="44" height="10" rx="2" fill="#e0b540" stroke="#7a5e2a" stroke-width="0.8"/>
-        <rect x="14" y="13" width="44" height="2" fill="#ffd84a" opacity="0.8"/>
-        <!-- gold middle band -->
-        <path d="M 8 42 Q 36 44 64 42" stroke="#d4a017" stroke-width="3" fill="none"/>
-        <!-- decorative dots -->
-        <circle cx="24" cy="52" r="2" fill="#d4a017"/>
-        <circle cx="36" cy="54" r="2" fill="#d4a017"/>
-        <circle cx="48" cy="52" r="2" fill="#d4a017"/>
-        <!-- dirt at top -->
-        <ellipse cx="36" cy="19" rx="22" ry="3" fill="#3a2810"/>
+        <path d="M 20 24 Q 8 32 14 50 Q 16 64 22 66 L 50 66 Q 56 64 58 50 Q 64 32 52 24 Z" fill="#f5e4c5" stroke="#7a5e2a" stroke-width="0.9"/>
+        <rect x="16" y="16" width="40" height="7" rx="2" fill="#e0b540" stroke="#7a5e2a" stroke-width="0.7"/>
+        <rect x="16" y="17" width="40" height="1.5" fill="#ffd84a" opacity="0.8"/>
+        <path d="M 10 44 Q 36 46 62 44" stroke="#d4a017" stroke-width="2.5" fill="none"/>
+        <circle cx="26" cy="52" r="1.6" fill="#d4a017"/>
+        <circle cx="36" cy="54" r="1.6" fill="#d4a017"/>
+        <circle cx="46" cy="52" r="1.6" fill="#d4a017"/>
+        <ellipse cx="36" cy="22" rx="20" ry="2.5" fill="#3a2810"/>
       </svg>`,
   };
 
