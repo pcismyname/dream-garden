@@ -134,10 +134,17 @@ window.Garden = window.Garden || {};
     const wrap = el(`<div class="garden"><div class="grid" style="grid-template-columns:repeat(${state.gridSize}, 72px); grid-template-rows:repeat(${state.gridSize}, 72px);"></div></div>`);
     const grid = wrap.querySelector(".grid");
 
+    const potId = state.activePotId || Garden.DEFAULT_POT;
     state.plots.forEach((plot, idx) => {
       const plotEl = document.createElement("div");
       plotEl.className = "plot";
       plotEl.dataset.idx = idx;
+
+      // Layer the active pot SVG as the plot background.
+      const potEl = document.createElement("div");
+      potEl.className = "plot-pot";
+      potEl.innerHTML = Garden.svg.potSvg(potId);
+      plotEl.appendChild(potEl);
 
       if (plot) {
         const stage = Garden.state.getStage(plot, now);
@@ -223,6 +230,10 @@ window.Garden = window.Garden || {};
             <div class="shop-grid" data-section="for-sale"></div>
           </section>
           <section class="shop-section">
+            <h3 class="catalog-section-title">Pot Skins</h3>
+            <div class="shop-grid" data-section="pots"></div>
+          </section>
+          <section class="shop-section">
             <h3 class="catalog-section-title">Your Decorations</h3>
             <div class="shop-grid" data-section="placed"></div>
           </section>
@@ -261,6 +272,42 @@ window.Garden = window.Garden || {};
         </div>
       `);
       saleGrid.appendChild(card);
+    });
+
+    // Pot Skins section
+    const potsGrid = overlay.querySelector("[data-section='pots']");
+    const ownedPots = Array.isArray(state.ownedPots) ? state.ownedPots : [Garden.DEFAULT_POT];
+    const activePotId = state.activePotId || Garden.DEFAULT_POT;
+    Garden.POTS.forEach(pot => {
+      const owned = ownedPots.includes(pot.id);
+      const active = owned && pot.id === activePotId;
+      const locked = !owned && state.level < pot.levelReq;
+      const unaffordable = !owned && !locked && state.coins < pot.cost;
+      const canBuy = !owned && !locked && !unaffordable;
+
+      let action;
+      if (active) {
+        action = `<span class="shop-status active">Active</span>`;
+      } else if (owned) {
+        action = `<button class="shop-buy-btn" data-action="use-pot" data-pot-id="${pot.id}">Use</button>`;
+      } else if (locked) {
+        action = `<span class="shop-status locked">🔒 Lv ${pot.levelReq}</span>`;
+      } else {
+        action = `<button class="shop-buy-btn" data-action="buy-pot" data-pot-id="${pot.id}" ${canBuy ? "" : "disabled"}>
+          Buy <span class="mini-coin"></span>${pot.cost}
+        </button>`;
+      }
+
+      const card = el(`
+        <div class="shop-card ${locked ? "locked-card" : ""} ${unaffordable && !locked ? "unaffordable" : ""} ${active ? "active-pot-card" : ""}">
+          <div class="shop-art">${Garden.svg.potSvg(pot.id)}</div>
+          <div class="shop-info">
+            <div class="shop-name">${pot.name}</div>
+            ${action}
+          </div>
+        </div>
+      `);
+      potsGrid.appendChild(card);
     });
 
     // Placed section
@@ -492,6 +539,34 @@ window.Garden = window.Garden || {};
         const result = Garden.state.removeDecoration(currentState, slot);
         if (result.ok && Garden.fx) {
           Garden.fx.toast("Removed. Refunded " + result.refund + " coins.", { variant: "quest" });
+        }
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+      const buyPotBtn = ev.target.closest("[data-action='buy-pot']");
+      if (buyPotBtn && !buyPotBtn.disabled) {
+        const potId = buyPotBtn.dataset.potId;
+        const result = Garden.state.buyPot(currentState, potId);
+        if (result.ok) {
+          // Auto-equip just-bought pot for instant feedback
+          Garden.state.setActivePot(currentState, potId);
+          if (Garden.fx) {
+            const pot = Garden.potById(potId);
+            Garden.fx.toast("Pot equipped: " + pot.name, { variant: "level" });
+          }
+        }
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+      const usePotBtn = ev.target.closest("[data-action='use-pot']");
+      if (usePotBtn) {
+        const potId = usePotBtn.dataset.potId;
+        const result = Garden.state.setActivePot(currentState, potId);
+        if (result.ok && Garden.fx) {
+          const pot = Garden.potById(potId);
+          Garden.fx.toast("Pot changed to " + pot.name, { variant: "level" });
         }
         Garden.storage.save(currentState);
         renderAll(currentState);
