@@ -172,8 +172,10 @@ body {
   flex: 1;
   padding: 30px 20px;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 24px;
 }
 
 .grid {
@@ -488,6 +490,146 @@ body {
 }
 .setting-row input[type="checkbox"]:checked { background: #56b256; }
 .setting-row input[type="checkbox"]:checked::after { left: 20px; }
+
+/* ===== Decoration zone (in-garden) ===== */
+.deco-zone {
+  display: grid;
+  grid-template-columns: repeat(6, 64px);
+  gap: 8px;
+  padding: 14px 12px 12px;
+  background: linear-gradient(180deg, transparent, rgba(60, 110, 60, 0.18));
+  border-radius: 12px;
+}
+
+.deco-slot {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+.deco-slot.empty {
+  border: 2px dashed rgba(60, 80, 50, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+}
+.deco-slot.filled {
+  /* Decoration sits directly on grass — no slot border */
+  background: transparent;
+}
+.deco-empty-mark {
+  color: rgba(60, 80, 50, 0.4);
+  font-size: 22px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* ===== Shop modal ===== */
+.shop-modal { overflow: hidden; }
+
+.shop-section {
+  padding: 16px 20px;
+  overflow-y: auto;
+}
+.shop-section + .shop-section { border-top: 1px solid #e6d9a8; }
+
+.shop-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.shop-card {
+  background: #fff;
+  border: 1px solid #d6c98a;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.shop-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(122, 94, 42, 0.2); }
+.shop-card.locked-card {
+  background: #efe7c4;
+  border-style: dashed;
+  opacity: 0.7;
+}
+.shop-card.locked-card:hover { transform: none; box-shadow: none; }
+.shop-card.unaffordable { opacity: 0.65; }
+.shop-card.placed-card { border-color: #56b256; background: linear-gradient(135deg, #fff 70%, #ebfae9); }
+
+.shop-art {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.shop-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.shop-name {
+  font-weight: bold;
+  font-size: 13px;
+  color: #3a2e0a;
+}
+
+.shop-buy-btn, .shop-remove-btn {
+  background: #56b256;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: bold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  box-shadow: 0 2px 0 #3b8e3b;
+  transition: transform 0.08s, box-shadow 0.08s;
+}
+.shop-buy-btn:hover, .shop-remove-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 0 #3b8e3b;
+}
+.shop-buy-btn:active, .shop-remove-btn:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #3b8e3b;
+}
+.shop-buy-btn:disabled {
+  background: #ccc;
+  box-shadow: 0 2px 0 #999;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+.shop-remove-btn {
+  background: #c98a4a;
+  box-shadow: 0 2px 0 #8e5a28;
+}
+.shop-remove-btn:hover { box-shadow: 0 3px 0 #8e5a28; }
+.shop-remove-btn:active { box-shadow: 0 1px 0 #8e5a28; }
+
+.shop-status {
+  font-size: 11px;
+  color: #999;
+  font-weight: bold;
+}
+.shop-status.locked { color: #7a5e2a; }
+
+.shop-empty {
+  font-size: 12px;
+  color: #7a5e2a;
+  font-style: italic;
+  padding: 8px;
+}
 
 /* ===== FX layer (floating numbers, toasts) ===== */
 #fx-layer {
