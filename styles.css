@@ -227,7 +227,8 @@ body {
   margin-top: -14%;
 }
 
-.plot.wilted .plot-pot { filter: saturate(0.5) brightness(0.85); }
+/* Wilted: keep the pot looking like a pot — just fade the flower inside it. */
+.plot.wilted .plot-content { filter: saturate(0.6) brightness(0.9); opacity: 0.85; }
 
 .plot-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
