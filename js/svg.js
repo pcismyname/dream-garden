@@ -90,16 +90,20 @@ window.Garden = window.Garden || {};
   }
 
   // Tiny icon for the seed shelf and catalog cards.
+  // Thin warm-brown stroke so light-petaled flowers (Daisy, Jasmine) are visible
+  // against light card backgrounds.
   function flowerIcon(flowerId) {
     const c = COLORS[flowerId] || COLORS.daisy;
     return `
       <svg viewBox="0 0 40 40" width="100%" height="100%">
-        <ellipse cx="20" cy="18" rx="5" ry="5" fill="${c.petal}"/>
-        <ellipse cx="14" cy="16" rx="4" ry="4" fill="${c.petal}"/>
-        <ellipse cx="26" cy="16" rx="4" ry="4" fill="${c.petal}"/>
-        <ellipse cx="16" cy="24" rx="4" ry="4" fill="${c.petal}"/>
-        <ellipse cx="24" cy="24" rx="4" ry="4" fill="${c.petal}"/>
-        <circle cx="20" cy="20" r="3" fill="${c.center}"/>
+        <g stroke="#6b5a3a" stroke-width="0.8">
+          <ellipse cx="20" cy="18" rx="5" ry="5" fill="${c.petal}"/>
+          <ellipse cx="14" cy="16" rx="4" ry="4" fill="${c.petal}"/>
+          <ellipse cx="26" cy="16" rx="4" ry="4" fill="${c.petal}"/>
+          <ellipse cx="16" cy="24" rx="4" ry="4" fill="${c.petal}"/>
+          <ellipse cx="24" cy="24" rx="4" ry="4" fill="${c.petal}"/>
+          <circle cx="20" cy="20" r="3" fill="${c.center}"/>
+        </g>
       </svg>`;
   }
 

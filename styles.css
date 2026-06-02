@@ -193,8 +193,10 @@ body {
   justify-content: center;
   padding: 6px;
   user-select: none;
+  transition: background 0.12s, transform 0.08s;
 }
-.plot:hover { background: #ad6a3a; }
+.plot:hover { background: #ad6a3a; transform: translateY(-1px); }
+.plot:active { transform: translateY(1px); }
 
 .plot-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
 
@@ -274,10 +276,13 @@ body {
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
+  transition: transform 0.12s, box-shadow 0.12s, border-color 0.12s;
 }
+.seed-card:hover { transform: translateY(-2px); box-shadow: 0 3px 6px rgba(122, 94, 42, 0.25); }
 .seed-card.selected {
   border: 2px solid #ff9933;
   padding: 5px 9px;
+  box-shadow: 0 0 0 3px rgba(255, 153, 51, 0.18);
 }
 .seed-card.locked {
   background: #eee;
@@ -285,6 +290,7 @@ body {
   opacity: 0.55;
   cursor: not-allowed;
 }
+.seed-card.locked:hover { transform: none; box-shadow: none; }
 .seed-card.unaffordable {
   opacity: 0.7;
 }
@@ -384,7 +390,10 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  transition: transform 0.12s, box-shadow 0.12s;
 }
+.catalog-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(122, 94, 42, 0.2); }
+.catalog-card.locked-card:hover { transform: none; box-shadow: none; }
 .catalog-card.rare-card {
   border-color: #b27acc;
   background: linear-gradient(135deg, #fff 70%, #f3e8ff);
