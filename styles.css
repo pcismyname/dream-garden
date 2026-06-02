@@ -260,8 +260,7 @@ body {
   background: rgba(180, 40, 40, 0.75);
 }
 
-.plot.wilted { background: #6b4f2a; box-shadow: 0 2px 0 #4a361a; }
-.plot.wilted:hover { background: #7a5a30; }
+/* No background on .plot.wilted — the pot SVG renders the visual now. */
 
 .wilt-badge {
   position: absolute;
