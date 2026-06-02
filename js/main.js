@@ -48,9 +48,16 @@ window.Garden = window.Garden || {};
 
   function start() {
     state = Garden.storage.load() || Garden.state.createInitialState();
-    // Backward-compat for saves from v1.0 that don't have these fields.
+    // Backward-compat for saves from earlier versions.
     if (!state.plantCounts) state.plantCounts = {};
     if (!state.discovered) state.discovered = {};
+    if (!Array.isArray(state.quests) || state.quests.length === 0) {
+      state.quests = [];
+      for (let i = 0; i < 3; i++) {
+        state.quests.push(Garden.state.generateQuest(state));
+      }
+      Garden.storage.save(state);
+    }
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
     lastStageSig = stageSignature(state, Date.now());
