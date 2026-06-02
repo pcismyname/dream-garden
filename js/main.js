@@ -77,6 +77,9 @@ window.Garden = window.Garden || {};
         !state.ownedPots.includes(state.activePotId)) {
       state.activePotId = Garden.DEFAULT_POT;
     }
+    if (!state.inventory || typeof state.inventory !== "object") {
+      state.inventory = {};
+    }
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
     lastStageSig = stageSignature(state, Date.now());

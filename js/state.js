@@ -18,9 +18,51 @@ window.Garden = window.Garden || {};
       decorations: new Array(Garden.DECORATION_SLOTS).fill(null),
       ownedPots: [Garden.DEFAULT_POT],
       activePotId: Garden.DEFAULT_POT,
+      inventory: {},
     };
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
+  }
+
+  function buyPotion(state, potionId) {
+    const potion = Garden.potionById(potionId);
+    if (!potion) return { ok: false, reason: "unknown" };
+    if (state.level < potion.levelReq) return { ok: false, reason: "locked" };
+    if (state.coins < potion.cost) return { ok: false, reason: "broke" };
+    if (!state.inventory) state.inventory = {};
+    state.coins -= potion.cost;
+    state.inventory[potionId] = (state.inventory[potionId] || 0) + 1;
+    return { ok: true };
+  }
+
+  function usePotion(state, plotIdx, potionId) {
+    if (!state.inventory || !state.inventory[potionId]) {
+      return { ok: false, reason: "no-potion" };
+    }
+    const plot = state.plots[plotIdx];
+    if (!plot) return { ok: false, reason: "empty-plot" };
+
+    const now = Date.now();
+    const stage = getStage(plot, now);
+
+    if (potionId === "speedPotion") {
+      if (stage !== "growing") return { ok: false, reason: "not-growing" };
+      // Subtract 15s from the bloom timer. Don't push below current time
+      // (that would make it bloomed but with arbitrary bloomAt history).
+      plot.bloomAt = Math.max(now, plot.bloomAt - Garden.SPEED_POTION_MS);
+      state.inventory[potionId] = Math.max(0, state.inventory[potionId] - 1);
+      return { ok: true };
+    }
+
+    if (potionId === "revivalPotion") {
+      if (stage !== "wilted") return { ok: false, reason: "not-wilted" };
+      // Restore to freshly bloomed: full wilt window remaining.
+      plot.bloomAt = now;
+      state.inventory[potionId] = Math.max(0, state.inventory[potionId] - 1);
+      return { ok: true };
+    }
+
+    return { ok: false, reason: "unknown-potion" };
   }
 
   function buyPot(state, potId) {
@@ -241,5 +283,6 @@ window.Garden = window.Garden || {};
     generateQuest,
     buyDecoration, removeDecoration,
     buyPot, setActivePot,
+    buyPotion, usePotion,
   };
 })(window.Garden);
