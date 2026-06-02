@@ -15,9 +15,36 @@ window.Garden = window.Garden || {};
       discovered: {},    // { rareFlowerId: true } — rares the player has grown
       quests: [],
       settings: { floatingNumbers: true },
+      decorations: new Array(Garden.DECORATION_SLOTS).fill(null),
     };
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
+  }
+
+  function buyDecoration(state, decorationId) {
+    const dec = Garden.decorationById(decorationId);
+    if (!dec) return { ok: false, reason: "unknown" };
+    if (state.level < dec.levelReq) return { ok: false, reason: "locked" };
+    if (state.coins < dec.cost) return { ok: false, reason: "broke" };
+    if (!Array.isArray(state.decorations)) {
+      state.decorations = new Array(Garden.DECORATION_SLOTS).fill(null);
+    }
+    const slot = state.decorations.findIndex(s => s == null);
+    if (slot === -1) return { ok: false, reason: "full" };
+    state.coins -= dec.cost;
+    state.decorations[slot] = dec.id;
+    return { ok: true, slot };
+  }
+
+  function removeDecoration(state, slotIdx) {
+    if (!Array.isArray(state.decorations)) return { ok: false, reason: "empty" };
+    const id = state.decorations[slotIdx];
+    if (id == null) return { ok: false, reason: "empty" };
+    const dec = Garden.decorationById(id);
+    state.decorations[slotIdx] = null;
+    const refund = dec ? Math.floor(dec.cost * Garden.DECORATION_REFUND_PCT) : 0;
+    state.coins += refund;
+    return { ok: true, refund };
   }
 
   // Random quest: deliver N of an unlocked flower. Always picks from currently-unlocked
@@ -190,5 +217,6 @@ window.Garden = window.Garden || {};
     createInitialState, getStage, plant, water, sun, harvest, clear,
     xpForNextLevel, expandGrid, nextExpansion, GRID_EXPANSIONS,
     generateQuest,
+    buyDecoration, removeDecoration,
   };
 })(window.Garden);
