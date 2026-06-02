@@ -45,19 +45,20 @@ window.Garden = window.Garden || {};
       </svg>`;
   }
 
-  // Wilted: petals droop, brown/gray, bent stem. Same silhouette for all flowers —
-  // wilt is wilt, color doesn't matter.
+  // Wilted: a small dried plant clearly drooping inside the pot.
+  // Uses pale tan + dark olive (high contrast against terracotta pot orange)
+  // and is positioned off-center so the pot interior remains visible.
   const WILTED_SVG = `
     <svg viewBox="0 0 80 80" width="100%" height="100%">
-      <!-- Drooping petals, faded -->
-      <ellipse cx="40" cy="54" rx="8" ry="6" fill="#8b7355"/>
-      <ellipse cx="30" cy="50" rx="7" ry="5" fill="#8b7355" opacity="0.85"/>
-      <ellipse cx="50" cy="50" rx="7" ry="5" fill="#8b7355" opacity="0.85"/>
-      <ellipse cx="33" cy="60" rx="6" ry="4" fill="#736049" opacity="0.7"/>
-      <ellipse cx="47" cy="60" rx="6" ry="4" fill="#736049" opacity="0.7"/>
-      <circle cx="40" cy="55" r="3.5" fill="#4a3a26"/>
-      <!-- Bent stem -->
-      <path d="M 40 60 Q 28 66 32 75" stroke="#6b4f2a" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <!-- Stem rising from pot base, bending sharply to the side -->
+      <path d="M 40 75 L 40 56 Q 38 52 30 54" stroke="#4a4022" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      <!-- Drooping bud at the end of the bent stem -->
+      <ellipse cx="28" cy="56" rx="6" ry="4" fill="#c9b08a" stroke="#7a6442" stroke-width="0.7"/>
+      <ellipse cx="24" cy="54" rx="3" ry="2.5" fill="#b89878" opacity="0.9"/>
+      <ellipse cx="32" cy="58" rx="3" ry="2.5" fill="#b89878" opacity="0.85"/>
+      <circle cx="28" cy="56" r="2" fill="#4a3a26"/>
+      <!-- Single drooping leaf on the other side -->
+      <ellipse cx="48" cy="62" rx="6" ry="2.5" fill="#7a7a4a" stroke="#4a4022" stroke-width="0.6" transform="rotate(28 48 62)"/>
     </svg>`;
 
   // Flower color table (petal, center) — both normals and rares.
