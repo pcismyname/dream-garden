@@ -137,5 +137,11 @@ window.Garden = window.Garden || {};
       <line x1="17" y1="17.3" x2="23" y2="17" stroke="#c9a87a" stroke-width="0.7"/>
     </svg>`;
 
-  Garden.svg = { flowerSvg, flowerIcon, MYSTERY_ICON, BOOK_ICON };
+  // Gear icon for the Settings button.
+  const GEAR_ICON = `
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path d="M19.14 12.94a7.42 7.42 0 0 0 .05-.94 7.42 7.42 0 0 0-.05-.94l2.03-1.58a.48.48 0 0 0 .12-.61l-1.92-3.32a.48.48 0 0 0-.59-.21l-2.39.96a7.4 7.4 0 0 0-1.63-.94l-.36-2.54A.47.47 0 0 0 13.94 2h-3.84a.47.47 0 0 0-.47.4l-.36 2.54a7.4 7.4 0 0 0-1.63.94l-2.39-.96a.48.48 0 0 0-.59.21L2.74 8.45a.48.48 0 0 0 .12.61l2.03 1.58a7.42 7.42 0 0 0-.05.94 7.42 7.42 0 0 0 .05.94l-2.03 1.58a.48.48 0 0 0-.12.61l1.92 3.32a.48.48 0 0 0 .59.21l2.39-.96a7.4 7.4 0 0 0 1.63.94l.36 2.54a.47.47 0 0 0 .47.4h3.84a.47.47 0 0 0 .47-.4l.36-2.54a7.4 7.4 0 0 0 1.63-.94l2.39.96a.48.48 0 0 0 .59-.21l1.92-3.32a.48.48 0 0 0-.12-.61zM12 15.5A3.5 3.5 0 1 1 15.5 12 3.5 3.5 0 0 1 12 15.5z" fill="#7a5e2a"/>
+    </svg>`;
+
+  Garden.svg = { flowerSvg, flowerIcon, MYSTERY_ICON, BOOK_ICON, GEAR_ICON };
 })(window.Garden);

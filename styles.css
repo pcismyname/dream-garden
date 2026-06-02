@@ -106,6 +106,7 @@ body {
 }
 .icon-btn:hover { background: #fff8e0; }
 .icon-btn svg { display: block; flex-shrink: 0; }
+.icon-btn-square { padding: 5px 7px; }
 
 /* ===== Quests bar ===== */
 .quests-bar {
@@ -432,6 +433,61 @@ body {
   letter-spacing: 0.05em;
   vertical-align: middle;
 }
+
+/* ===== Settings modal ===== */
+.settings-section {
+  padding: 16px 20px 20px;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 0;
+  cursor: pointer;
+}
+.setting-row + .setting-row { border-top: 1px solid #e6d9a8; }
+
+.setting-name {
+  font-weight: bold;
+  color: #3a2e0a;
+  font-size: 13px;
+  display: block;
+}
+.setting-desc {
+  font-size: 11px;
+  color: #7a5e2a;
+  display: block;
+  margin-top: 2px;
+}
+
+.setting-row input[type="checkbox"] {
+  width: 40px;
+  height: 22px;
+  appearance: none;
+  -webkit-appearance: none;
+  background: #d6c98a;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.18s;
+  flex-shrink: 0;
+}
+.setting-row input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  top: 2px;
+  left: 2px;
+  transition: left 0.18s;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.setting-row input[type="checkbox"]:checked { background: #56b256; }
+.setting-row input[type="checkbox"]:checked::after { left: 20px; }
 
 /* ===== FX layer (floating numbers, toasts) ===== */
 #fx-layer {

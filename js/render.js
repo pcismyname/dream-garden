@@ -9,6 +9,7 @@ window.Garden = window.Garden || {};
 
   let selectedSeedId = "daisy";
   let catalogOpen = false;
+  let settingsOpen = false;
 
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
@@ -41,6 +42,9 @@ window.Garden = window.Garden || {};
           <button class="icon-btn" data-action="open-catalog" title="Flower Catalog" aria-label="Open flower catalog">
             ${Garden.svg.BOOK_ICON}
             <span>Catalog</span>
+          </button>
+          <button class="icon-btn icon-btn-square" data-action="open-settings" title="Settings" aria-label="Open settings">
+            ${Garden.svg.GEAR_ICON}
           </button>
         </div>
       </div>
@@ -181,6 +185,30 @@ window.Garden = window.Garden || {};
     return name + "s";
   }
 
+  function renderSettings(state) {
+    const settings = state.settings || {};
+    const overlay = el(`
+      <div class="modal-overlay" data-action="settings-backdrop">
+        <div class="modal-content settings-modal">
+          <header class="modal-header">
+            <h2>Settings</h2>
+            <button class="modal-close" data-action="close-settings" aria-label="Close">✕</button>
+          </header>
+          <section class="settings-section">
+            <label class="setting-row">
+              <span>
+                <span class="setting-name">Floating numbers on harvest</span>
+                <span class="setting-desc">Show "+12c" and "+2 XP" rising from harvested plots</span>
+              </span>
+              <input type="checkbox" data-setting="floatingNumbers" ${settings.floatingNumbers ? "checked" : ""}>
+            </label>
+          </section>
+        </div>
+      </div>
+    `);
+    return overlay;
+  }
+
   function renderQuests(state) {
     const quests = (state.quests || []);
     if (quests.length === 0) return null;
@@ -270,6 +298,7 @@ window.Garden = window.Garden || {};
     app.appendChild(renderGrid(state));
     app.appendChild(renderShelf(state));
     if (catalogOpen) app.appendChild(renderCatalog(state));
+    if (settingsOpen) app.appendChild(renderSettings(state));
   }
 
   let currentState = null;
@@ -290,16 +319,33 @@ window.Garden = window.Garden || {};
         renderAll(currentState);
         return;
       }
-      const backdrop = ev.target.closest("[data-action='catalog-backdrop']");
-      if (backdrop && !ev.target.closest(".modal-content")) {
+      const catalogBackdrop = ev.target.closest("[data-action='catalog-backdrop']");
+      if (catalogBackdrop && !ev.target.closest(".modal-content")) {
         catalogOpen = false;
         renderAll(currentState);
         return;
       }
 
-      // When the catalog is open, swallow other clicks (plot/seed/expand) so
-      // the background game isn't manipulated by accident.
-      if (catalogOpen) return;
+      // Settings: open / close / backdrop
+      if (ev.target.closest("[data-action='open-settings']")) {
+        settingsOpen = true;
+        renderAll(currentState);
+        return;
+      }
+      if (ev.target.closest("[data-action='close-settings']")) {
+        settingsOpen = false;
+        renderAll(currentState);
+        return;
+      }
+      const settingsBackdrop = ev.target.closest("[data-action='settings-backdrop']");
+      if (settingsBackdrop && !ev.target.closest(".modal-content")) {
+        settingsOpen = false;
+        renderAll(currentState);
+        return;
+      }
+
+      // When any modal is open, swallow other clicks.
+      if (catalogOpen || settingsOpen) return;
 
       // Plot click
       const plotEl = ev.target.closest(".plot");
@@ -327,12 +373,27 @@ window.Garden = window.Garden || {};
       }
     });
 
-    // Esc closes the catalog
+    // Esc closes whichever modal is open
     document.addEventListener("keydown", (ev) => {
-      if (ev.key === "Escape" && catalogOpen) {
+      if (ev.key !== "Escape") return;
+      if (settingsOpen) {
+        settingsOpen = false;
+        if (currentState) renderAll(currentState);
+      } else if (catalogOpen) {
         catalogOpen = false;
         if (currentState) renderAll(currentState);
       }
+    });
+
+    // Settings toggles (checkbox change events)
+    app.addEventListener("change", (ev) => {
+      if (!currentState) return;
+      const cb = ev.target.closest("input[data-setting]");
+      if (!cb) return;
+      const key = cb.dataset.setting;
+      if (!currentState.settings) currentState.settings = {};
+      currentState.settings[key] = cb.checked;
+      Garden.storage.save(currentState);
     });
   }
 
