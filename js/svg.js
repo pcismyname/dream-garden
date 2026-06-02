@@ -332,6 +332,43 @@ window.Garden = window.Garden || {};
   }
 
   // ========================================================================
+  // Potion SVGs — small flask icons (~32x32).
+  // ========================================================================
+
+  const POTION_SVGS = {
+    speedPotion: `
+      <svg viewBox="0 0 40 40" width="100%" height="100%">
+        <!-- Cork -->
+        <rect x="15" y="3" width="10" height="3.5" rx="1" fill="#8b5a2b" stroke="#5a3815" stroke-width="0.5"/>
+        <!-- Neck -->
+        <rect x="16" y="6" width="8" height="6" fill="#c8dec8" stroke="#5a8e5a" stroke-width="0.5"/>
+        <!-- Flask body -->
+        <path d="M 14 12 L 26 12 L 30 28 Q 30 36 22 36 L 18 36 Q 10 36 10 28 Z" fill="#5fb35f" stroke="#2a7a2a" stroke-width="0.8"/>
+        <!-- Liquid surface highlight -->
+        <path d="M 14 14 Q 20 16 26 14" stroke="#3b8e3b" stroke-width="0.5" fill="none"/>
+        <!-- Up-arrow marker (speed) -->
+        <path d="M 20 19 L 15 26 L 25 26 Z" fill="#fff" opacity="0.92"/>
+        <!-- Highlight on flask -->
+        <path d="M 13 22 Q 12 28 14 33" stroke="#a8dba8" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.8"/>
+      </svg>`,
+
+    revivalPotion: `
+      <svg viewBox="0 0 40 40" width="100%" height="100%">
+        <rect x="15" y="3" width="10" height="3.5" rx="1" fill="#8b5a2b" stroke="#5a3815" stroke-width="0.5"/>
+        <rect x="16" y="6" width="8" height="6" fill="#cad9ea" stroke="#5a78a8" stroke-width="0.5"/>
+        <path d="M 14 12 L 26 12 L 30 28 Q 30 36 22 36 L 18 36 Q 10 36 10 28 Z" fill="#5cb6ff" stroke="#1a4a8a" stroke-width="0.8"/>
+        <path d="M 14 14 Q 20 16 26 14" stroke="#2a78c4" stroke-width="0.5" fill="none"/>
+        <!-- Heart marker (revival) -->
+        <path d="M 20 24 C 17 21, 14 22, 14.5 25 C 15 27.5, 20 30, 20 30 C 20 30, 25 27.5, 25.5 25 C 26 22, 23 21, 20 24 Z" fill="#fff" opacity="0.92"/>
+        <path d="M 13 22 Q 12 28 14 33" stroke="#a8d4f0" stroke-width="1.2" fill="none" stroke-linecap="round" opacity="0.8"/>
+      </svg>`,
+  };
+
+  function potionSvg(id) {
+    return POTION_SVGS[id] || "";
+  }
+
+  // ========================================================================
 
   // Gear icon for the Settings button.
   const GEAR_ICON = `
@@ -360,6 +397,6 @@ window.Garden = window.Garden || {};
 
   Garden.svg = {
     flowerSvg, flowerIcon, MYSTERY_ICON, BOOK_ICON, GEAR_ICON, SHOP_ICON,
-    decorationSvg, potSvg,
+    decorationSvg, potSvg, potionSvg,
   };
 })(window.Garden);
