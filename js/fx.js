@@ -32,6 +32,10 @@ window.Garden = window.Garden || {};
     el.className = "fx-float";
     if (opts.color) el.style.color = opts.color;
     if (opts.dx) el.style.setProperty("--fx-dx", opts.dx + "px");
+    if (opts.delay) {
+      el.style.animationDelay = opts.delay + "ms";
+      el.style.opacity = "0"; // stay invisible during the pre-animation delay
+    }
     el.textContent = text;
     el.style.left = x + "px";
     el.style.top = y + "px";

@@ -436,11 +436,12 @@ window.Garden = window.Garden || {};
     if (floatingOn && plotRect && Garden.fx) {
       const cx = plotRect.left + plotRect.width / 2;
       const cy = plotRect.top + plotRect.height * 0.35;
+      // Coin first, XP staggered ~220ms later — sequential pops avoid overlap.
       Garden.fx.floatText("+" + result.coinsGained + "c", cx, cy, {
-        color: "#b8860b", dx: -12,
+        color: "#b8860b",
       });
       Garden.fx.floatText("+" + result.xpGained + " XP", cx, cy, {
-        color: "#3b8e3b", dx: 16,
+        color: "#3b8e3b", delay: 220,
       });
     }
     if (result.questCompleted && Garden.fx) {
