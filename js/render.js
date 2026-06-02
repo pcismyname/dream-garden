@@ -341,6 +341,9 @@ window.Garden = window.Garden || {};
     const plot = state.plots[idx];
     const now = Date.now();
 
+    let harvestResult = null;
+    let plotRect = null;
+
     if (!plot) {
       if (!selectedSeedId) return;
       Garden.state.plant(state, idx, selectedSeedId);
@@ -348,12 +351,53 @@ window.Garden = window.Garden || {};
       const stage = Garden.state.getStage(plot, now);
       if (stage === "seed") Garden.state.water(state, idx);
       else if (stage === "watered") Garden.state.sun(state, idx);
-      else if (stage === "bloomed") Garden.state.harvest(state, idx);
+      else if (stage === "bloomed") {
+        // Capture position BEFORE the DOM is torn down by renderAll,
+        // so the floating numbers can spawn at the right spot.
+        const plotEls = document.querySelectorAll(".plot");
+        if (plotEls[idx]) plotRect = plotEls[idx].getBoundingClientRect();
+        harvestResult = Garden.state.harvest(state, idx);
+      }
       else if (stage === "wilted") Garden.state.clear(state, idx);
       // growing → no-op
     }
     Garden.storage.save(state);
     renderAll(state);
+
+    // FX feedback on harvest (runs AFTER renderAll so it lays over the new DOM).
+    if (harvestResult && harvestResult.ok) {
+      emitHarvestFx(state, harvestResult, plotRect);
+    }
+  }
+
+  function emitHarvestFx(state, result, plotRect) {
+    const floatingOn = !!(state.settings && state.settings.floatingNumbers);
+    if (floatingOn && plotRect && Garden.fx) {
+      const cx = plotRect.left + plotRect.width / 2;
+      const cy = plotRect.top + plotRect.height * 0.35;
+      Garden.fx.floatText("+" + result.coinsGained + "c", cx, cy, {
+        color: "#b8860b", dx: -12,
+      });
+      Garden.fx.floatText("+" + result.xpGained + " XP", cx, cy, {
+        color: "#3b8e3b", dx: 16,
+      });
+    }
+    if (result.questCompleted && Garden.fx) {
+      const qc = result.questCompleted;
+      const flower = Garden.flowerById(qc.flowerId);
+      const name = flower ? flower.name : qc.flowerId;
+      Garden.fx.toast(
+        "Order complete: " + qc.target + " × " + name + "  +" + qc.coinBonus + "c  +" + qc.xpBonus + " XP",
+        { variant: "quest" }
+      );
+    }
+    if (result.leveledUp && Garden.fx) {
+      const newUnlock = Garden.FLOWERS.find(f => f.levelReq === result.newLevel);
+      const text = newUnlock
+        ? "Level " + result.newLevel + "! " + newUnlock.name + " unlocked."
+        : "Level " + result.newLevel + " reached!";
+      Garden.fx.toast(text, { variant: "level" });
+    }
   }
 
   Garden.render = {
