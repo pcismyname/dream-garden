@@ -58,6 +58,10 @@ window.Garden = window.Garden || {};
       }
       Garden.storage.save(state);
     }
+    if (!state.settings) state.settings = { floatingNumbers: true };
+    if (typeof state.settings.floatingNumbers !== "boolean") {
+      state.settings.floatingNumbers = true;
+    }
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
     lastStageSig = stageSignature(state, Date.now());

@@ -14,6 +14,7 @@ window.Garden = window.Garden || {};
       plantCounts: {},   // { flowerId: int } — counts plantings of NORMAL flowers
       discovered: {},    // { rareFlowerId: true } — rares the player has grown
       quests: [],
+      settings: { floatingNumbers: true },
     };
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
@@ -110,8 +111,10 @@ window.Garden = window.Garden || {};
     if (stage !== "bloomed") return { ok: false, reason: "not-ready" };
     const flower = Garden.flowerById(plot.flowerId);
 
-    state.coins += flower.sellPrice;
-    state.xp += Math.floor(flower.sellPrice / 5);
+    const coinsGained = flower.sellPrice;
+    const xpGained = Math.floor(flower.sellPrice / 5);
+    state.coins += coinsGained;
+    state.xp += xpGained;
     state.plots[plotIdx] = null;
 
     // Quest progress: harvesting a rare counts toward its parent's quest.
@@ -140,7 +143,15 @@ window.Garden = window.Garden || {};
       state.level += 1;
       leveledUp = true;
     }
-    return { ok: true, leveledUp, rare: !!flower.rare, questCompleted };
+    return {
+      ok: true,
+      coinsGained,
+      xpGained,
+      leveledUp,
+      newLevel: state.level,
+      rare: !!flower.rare,
+      questCompleted,
+    };
   }
 
   // Click a wilted plot to compost it. No reward — seed cost is already lost.
