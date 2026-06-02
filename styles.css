@@ -432,3 +432,78 @@ body {
   letter-spacing: 0.05em;
   vertical-align: middle;
 }
+
+/* ===== FX layer (floating numbers, toasts) ===== */
+#fx-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 200;
+}
+
+.fx-float {
+  position: absolute;
+  font-weight: bold;
+  font-size: 16px;
+  color: #5a3e0a;
+  text-shadow: 0 0 3px #fff, 0 0 6px #fff, 0 1px 0 #fff;
+  pointer-events: none;
+  transform: translate(-50%, 0);
+  animation: fx-rise 0.95s cubic-bezier(0.2, 0.7, 0.3, 1) forwards;
+  --fx-dx: 0px;
+}
+
+@keyframes fx-rise {
+  0%   { transform: translate(calc(-50% + var(--fx-dx)), 0)     scale(0.8); opacity: 0; }
+  15%  { transform: translate(calc(-50% + var(--fx-dx)), -6px)  scale(1.15); opacity: 1; }
+  70%  { transform: translate(calc(-50% + var(--fx-dx)), -36px) scale(1.0); opacity: 1; }
+  100% { transform: translate(calc(-50% + var(--fx-dx)), -56px) scale(0.95); opacity: 0; }
+}
+
+#toast-layer {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  pointer-events: none;
+  z-index: 201;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 300px;
+}
+
+.toast {
+  background: #fff4d6;
+  border: 2px solid #d6c98a;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #3a2e0a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+  animation: toast-in 0.3s ease-out, toast-out 0.4s ease-in 2.7s forwards;
+}
+
+.toast-quest {
+  border-color: #ff9933;
+  background: linear-gradient(135deg, #fff9e0, #fff4d6);
+}
+.toast-level {
+  border-color: #56b256;
+  background: linear-gradient(135deg, #ebfae9, #fff4d6);
+}
+.toast-rare {
+  border-color: #b27acc;
+  background: linear-gradient(135deg, #f8ecff, #fff4d6);
+}
+
+@keyframes toast-in {
+  from { transform: translateX(120%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+@keyframes toast-out {
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(120%); opacity: 0; }
+}
