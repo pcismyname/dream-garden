@@ -395,8 +395,61 @@ window.Garden = window.Garden || {};
       <rect x="16" y="14" width="3" height="3" fill="#5cb6ff" stroke="#7a5e2a" stroke-width="0.4"/>
     </svg>`;
 
+  // Calendar icon for the Daily button — red header, checkmark body.
+  const CALENDAR_ICON = `
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <rect x="3" y="5" width="18" height="16" rx="2" fill="#fff4d6" stroke="#7a5e2a" stroke-width="1"/>
+      <rect x="3" y="5" width="18" height="5" rx="2" fill="#c94a4a"/>
+      <rect x="6" y="3" width="2" height="4" rx="1" fill="#7a5e2a"/>
+      <rect x="16" y="3" width="2" height="4" rx="1" fill="#7a5e2a"/>
+      <path d="M8 14 L11 17 L16 12" stroke="#3e7d2f" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </svg>`;
+
+  // Treasure chest for the all-3 daily quest bonus.
+  const CHEST_ICON = `
+    <svg viewBox="0 0 40 40" width="100%" height="100%">
+      <rect x="6" y="18" width="28" height="14" rx="2" fill="#8b5a2b" stroke="#5a3815" stroke-width="1"/>
+      <path d="M6 18 Q6 10 20 10 Q34 10 34 18 Z" fill="#a06a35" stroke="#5a3815" stroke-width="1"/>
+      <rect x="17" y="16" width="6" height="8" rx="1" fill="#ffd84a" stroke="#b8860b" stroke-width="1"/>
+    </svg>`;
+
+  // Mystery sprout: green sprout with a "?" bubble — hides the resolved flower
+  // while a mystery seed grows. Same 40x40 viewBox as the other stage art.
+  const MYSTERY_SPROUT_SVG = `
+    <svg viewBox="0 0 40 40" width="100%" height="100%">
+      <rect x="19" y="20" width="2" height="14" fill="#3b8e3b"/>
+      <ellipse cx="14" cy="26" rx="6" ry="3" fill="#56b256" transform="rotate(-20 14 26)"/>
+      <ellipse cx="26" cy="28" rx="6" ry="3" fill="#56b256" transform="rotate(20 26 28)"/>
+      <circle cx="20" cy="13" r="7" fill="#d6c98a" opacity="0.6"/>
+      <text x="20" y="17" text-anchor="middle" font-size="11" font-weight="bold" fill="#7a5e2a">?</text>
+    </svg>`;
+
+  // Stage art for a growing mystery plot. Seed/watered look like any seed;
+  // only the growing stage needs masking (its bud color would leak the flower).
+  function mysterySproutSvg(stage) {
+    if (stage === "seed") return SEED_SVG;
+    if (stage === "watered") return WATERED_SVG;
+    if (stage === "sunned") return SUNNED_SVG;
+    return MYSTERY_SPROUT_SVG; // "growing"
+  }
+
+  // Icons for the lucky-draw prize row. Coin prizes stack 1-3 coins.
+  function drawPrizeSvg(id) {
+    if (id === "speedPotion" || id === "revivalPotion") return potionSvg(id);
+    if (id === "mysterySeed") return MYSTERY_ICON;
+    const count = id === "coinsSmall" ? 1 : id === "coinsMedium" ? 2 : 3;
+    let circles = "";
+    for (let i = 0; i < count; i++) {
+      const cx = 20 - (count - 1) * 5 + i * 10;
+      const cy = 24 - i * 4;
+      circles += `<circle cx="${cx}" cy="${cy}" r="8" fill="#ffd84a" stroke="#b8860b" stroke-width="1.5"/>`;
+    }
+    return `<svg viewBox="0 0 40 40" width="100%" height="100%">${circles}</svg>`;
+  }
+
   Garden.svg = {
     flowerSvg, flowerIcon, MYSTERY_ICON, BOOK_ICON, GEAR_ICON, SHOP_ICON,
     decorationSvg, potSvg, potionSvg,
+    CALENDAR_ICON, CHEST_ICON, mysterySproutSvg, drawPrizeSvg,
   };
 })(window.Garden);
