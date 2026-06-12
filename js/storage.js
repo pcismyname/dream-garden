@@ -6,6 +6,7 @@ window.Garden = window.Garden || {};
 
   function save(state) {
     try {
+      if (state.daily) state.daily.lastSeenAt = Date.now();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       // Quota exceeded, private mode, etc. — game continues in-memory.

@@ -19,6 +19,7 @@ window.Garden = window.Garden || {};
       ownedPots: [Garden.DEFAULT_POT],
       activePotId: Garden.DEFAULT_POT,
       inventory: {},
+      daily: Garden.daily ? Garden.daily.defaultDaily() : null,
     };
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
@@ -173,6 +174,30 @@ window.Garden = window.Garden || {};
     return { ok: true, rareSpawned };
   }
 
+  // Plant a mystery seed: the real flower is resolved NOW but hidden ("?")
+  // until bloom. Bypasses plantCounts and the every-Nth rare interval by design.
+  function plantMystery(state, plotIdx) {
+    if (plotIdx < 0 || plotIdx >= state.plots.length) return { ok: false, reason: "bad-index" };
+    if (state.plots[plotIdx] !== null) return { ok: false, reason: "occupied" };
+    if (!state.inventory || !(state.inventory.mysterySeed > 0)) return { ok: false, reason: "no-seed" };
+
+    const unlocked = Garden.FLOWERS.filter(f => state.level >= f.levelReq);
+    const base = unlocked[Math.floor(Math.random() * unlocked.length)];
+    let flowerId = base.id;
+    const rare = Garden.rareForParent(base.id);
+    if (rare && Math.random() < 0.25) flowerId = rare.id;
+
+    state.inventory.mysterySeed -= 1;
+    state.plots[plotIdx] = {
+      flowerId,
+      stage: "seed",
+      plantedAt: Date.now(),
+      bloomAt: null,
+      mystery: true,
+    };
+    return { ok: true };
+  }
+
   function water(state, plotIdx) {
     const plot = state.plots[plotIdx];
     if (!plot) return { ok: false, reason: "empty" };
@@ -208,23 +233,37 @@ window.Garden = window.Garden || {};
     state.xp += xpGained;
     state.plots[plotIdx] = null;
 
-    // Quest progress: harvesting a rare counts toward its parent's quest.
-    // Each harvest ticks at most one matching incomplete quest (the first found).
+    // Daily quest progress: harvesting a rare counts toward its parent's quest.
+    // Quests do NOT regenerate on completion — they refresh once per day (js/daily.js).
     if (!state.quests) state.quests = [];
     const parentId = flower.parentId || flower.id;
     let questCompleted = null;
+    let chestAwarded = null;
     const qIdx = state.quests.findIndex(q => q.flowerId === parentId && q.progress < q.target);
     if (qIdx >= 0) {
       state.quests[qIdx].progress += 1;
       if (state.quests[qIdx].progress >= state.quests[qIdx].target) {
         const q = state.quests[qIdx];
         const qFlower = Garden.flowerById(q.flowerId);
-        const coinBonus = Math.round(q.target * qFlower.sellPrice * 0.5);
-        const xpBonus = 10 + q.target * Math.floor(qFlower.sellPrice / 10);
+        // 1.5x the old rolling-quest bonuses — daily quests are scarcer (3/day).
+        const coinBonus = Math.round(q.target * qFlower.sellPrice * 0.75);
+        const xpBonus = Math.round((10 + q.target * Math.floor(qFlower.sellPrice / 10)) * 1.5);
         state.coins += coinBonus;
         state.xp += xpBonus;
         questCompleted = { flowerId: q.flowerId, target: q.target, coinBonus, xpBonus };
-        state.quests[qIdx] = generateQuest(state);
+
+        // All-3 chest: once per day, when the third quest completes.
+        const allDone = state.quests.every(qq => qq.progress >= qq.target);
+        const today = Garden.daily ? Garden.daily.todayKey() : null;
+        if (allDone && today && state.daily && state.daily.chestDay !== today) {
+          state.daily.chestDay = today;
+          const chestCoins = 100 + state.level * 25;
+          const chestPotionId = Math.random() < 0.5 ? "speedPotion" : "revivalPotion";
+          if (!state.inventory) state.inventory = {};
+          state.inventory[chestPotionId] = (state.inventory[chestPotionId] || 0) + 1;
+          state.coins += chestCoins;
+          chestAwarded = { coins: chestCoins, potionId: chestPotionId };
+        }
       }
     }
 
@@ -242,6 +281,7 @@ window.Garden = window.Garden || {};
       newLevel: state.level,
       rare: !!flower.rare,
       questCompleted,
+      chestAwarded,
     };
   }
 
@@ -278,7 +318,7 @@ window.Garden = window.Garden || {};
   }
 
   Garden.state = {
-    createInitialState, getStage, plant, water, sun, harvest, clear,
+    createInitialState, getStage, plant, plantMystery, water, sun, harvest, clear,
     xpForNextLevel, expandGrid, nextExpansion, GRID_EXPANSIONS,
     generateQuest,
     buyDecoration, removeDecoration,
