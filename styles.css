@@ -812,3 +812,63 @@ body {
   from { transform: translateX(0);    opacity: 1; }
   to   { transform: translateX(120%); opacity: 0; }
 }
+
+/* ===== Daily report modal ===== */
+.daily-modal { max-width: 460px; }
+.daily-section { margin-bottom: 16px; }
+.recap-line { font-size: 14px; color: #5a3e0a; padding: 6px 2px; }
+.streak-strip { display: flex; gap: 4px; margin-bottom: 8px; }
+.streak-cell {
+  flex: 1;
+  background: #fff8e0;
+  border: 1px solid #e0d0a0;
+  border-radius: 6px;
+  padding: 4px 2px;
+  text-align: center;
+  position: relative;
+}
+.streak-cell.done { opacity: 0.55; }
+.streak-cell.current {
+  border-color: #b8860b;
+  background: #ffefb8;
+  box-shadow: 0 0 0 2px rgba(255, 216, 74, 0.4);
+}
+.streak-day { font-size: 10px; font-weight: bold; color: #7a5e2a; }
+.streak-reward { font-size: 9px; color: #5a3e0a; min-height: 22px; }
+.streak-check { position: absolute; top: 2px; right: 4px; color: #3e7d2f; font-size: 10px; font-weight: bold; }
+.streak-action, .draw-action { display: flex; justify-content: center; margin-top: 4px; }
+.draw-row { display: flex; gap: 6px; margin-bottom: 8px; }
+.draw-prize {
+  flex: 1;
+  background: #fff8e0;
+  border: 1px solid #e0d0a0;
+  border-radius: 6px;
+  padding: 4px;
+  text-align: center;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.draw-prize-icon { width: 32px; height: 32px; margin: 0 auto; }
+.draw-prize-label { font-size: 8px; color: #5a3e0a; }
+.draw-prize.spin-active {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px #ffd84a;
+  background: #ffefb8;
+}
+.daily-footer { display: flex; justify-content: center; padding-top: 8px; border-top: 1px solid #e0d0a0; }
+.icon-btn { position: relative; }
+.daily-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #c94a4a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: bold;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}

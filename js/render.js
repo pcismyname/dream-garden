@@ -12,12 +12,15 @@ window.Garden = window.Garden || {};
   let catalogOpen = false;
   let settingsOpen = false;
   let shopOpen = false;
+  let dailyOpen = false;
+  let dailyRecap = null; // recap computed at boot, shown in the Morning Report
 
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
     const xpPct = Math.min(100, Math.floor((state.xp / xpNeeded) * 100));
     const exp = Garden.state.nextExpansion(state);
     const totalPlots = state.gridSize * state.gridSize;
+    const claimables = Garden.daily ? Garden.daily.claimablesCount(state) : 0;
 
     let expandBtnHtml = "";
     if (exp && state.level >= exp.minLevel) {
@@ -41,6 +44,11 @@ window.Garden = window.Garden || {};
         <div class="topbar-right">
           <span>${totalPlots} plots</span>
           ${expandBtnHtml}
+          <button class="icon-btn" data-action="open-daily" title="Daily Report" aria-label="Open daily report">
+            ${Garden.svg.CALENDAR_ICON}
+            <span>Daily</span>
+            ${claimables > 0 ? `<span class="daily-badge">${claimables}</span>` : ""}
+          </button>
           <button class="icon-btn" data-action="open-shop" title="Decoration Shop" aria-label="Open shop">
             ${Garden.svg.SHOP_ICON}
             <span>Shop</span>
@@ -436,6 +444,111 @@ window.Garden = window.Garden || {};
     return overlay;
   }
 
+  function streakRewardLabel(r) {
+    const parts = [];
+    if (r.coins) parts.push(r.coins + "c");
+    if (r.potionId) {
+      const potion = Garden.potionById(r.potionId);
+      parts.push(potion ? potion.name : r.potionId);
+    }
+    if (r.mysterySeed) parts.push("Mystery Seed");
+    return parts.join(" + ");
+  }
+
+  function renderDailyReport(state) {
+    const daily = Garden.daily.ensureDaily(state);
+    const today = Garden.daily.todayKey();
+    const canClaim = Garden.daily.canClaimStreak(state);
+    const canSpinNow = Garden.daily.canSpin(state);
+    const nextPos = Garden.daily.nextStreakPosition(daily, today);
+    // Highlight the position up next; after claiming, the one just claimed.
+    const highlightPos = canClaim ? nextPos : ((daily.streakCount - 1) % 7) + 1;
+
+    const overlay = el(`
+      <div class="modal-overlay" data-action="daily-backdrop">
+        <div class="modal-content daily-modal">
+          <header class="modal-header">
+            <h2>☀ Daily Garden Report</h2>
+            <button class="modal-close" data-action="close-daily" aria-label="Close">✕</button>
+          </header>
+          <div class="daily-sections"></div>
+          <footer class="daily-footer">
+            <button class="shop-buy-btn daily-start-btn" data-action="close-daily">Start gardening</button>
+          </footer>
+        </div>
+      </div>
+    `);
+    const sections = overlay.querySelector(".daily-sections");
+
+    // --- While you were away ---
+    if (dailyRecap && dailyRecap.show) {
+      sections.appendChild(el(`
+        <section class="daily-section">
+          <h3 class="catalog-section-title">While you were away</h3>
+          <div class="recap-line">🌸 ${dailyRecap.bloomed} bloomed · 🥀 ${dailyRecap.wilted} wilted · ✓ ${dailyRecap.readyNow} ready now</div>
+        </section>
+      `));
+    }
+
+    // --- Login streak ---
+    const streakSec = el(`
+      <section class="daily-section">
+        <h3 class="catalog-section-title">Login Streak</h3>
+        <div class="streak-strip"></div>
+        <div class="streak-action"></div>
+      </section>
+    `);
+    const strip = streakSec.querySelector(".streak-strip");
+    Garden.daily.STREAK_REWARDS.forEach(r => {
+      const current = r.day === highlightPos;
+      const done = canClaim ? r.day < highlightPos : r.day <= highlightPos && !current;
+      strip.appendChild(el(`
+        <div class="streak-cell ${done ? "done" : ""} ${current ? "current" : ""}">
+          <div class="streak-day">Day ${r.day}</div>
+          <div class="streak-reward">${streakRewardLabel(r)}</div>
+          ${done ? '<div class="streak-check">✓</div>' : ""}
+        </div>
+      `));
+    });
+    const action = streakSec.querySelector(".streak-action");
+    if (canClaim) {
+      const r = Garden.daily.STREAK_REWARDS[nextPos - 1];
+      action.appendChild(el(
+        `<button class="shop-buy-btn" data-action="daily-claim">Claim Day ${nextPos}: ${streakRewardLabel(r)}</button>`
+      ));
+    } else {
+      action.appendChild(el(`<span class="shop-status active">Claimed today ✓ — come back tomorrow</span>`));
+    }
+    sections.appendChild(streakSec);
+
+    // --- Lucky draw ---
+    const drawSec = el(`
+      <section class="daily-section">
+        <h3 class="catalog-section-title">Lucky Draw</h3>
+        <div class="draw-row"></div>
+        <div class="draw-action"></div>
+      </section>
+    `);
+    const row = drawSec.querySelector(".draw-row");
+    Garden.daily.DRAW_PRIZES.forEach(p => {
+      row.appendChild(el(`
+        <div class="draw-prize" data-prize-id="${p.id}" title="${p.label}">
+          <div class="draw-prize-icon">${Garden.svg.drawPrizeSvg(p.id)}</div>
+          <div class="draw-prize-label">${p.label}</div>
+        </div>
+      `));
+    });
+    const drawAction = drawSec.querySelector(".draw-action");
+    if (canSpinNow) {
+      drawAction.appendChild(el(`<button class="shop-buy-btn" data-action="daily-spin">🎰 Spin (free today)</button>`));
+    } else {
+      drawAction.appendChild(el(`<span class="shop-status">Spun today — come back tomorrow</span>`));
+    }
+    sections.appendChild(drawSec);
+
+    return overlay;
+  }
+
   function renderQuests(state) {
     const quests = (state.quests || []);
     if (quests.length === 0) return null;
@@ -537,6 +650,7 @@ window.Garden = window.Garden || {};
     if (catalogOpen) app.appendChild(renderCatalog(state));
     if (settingsOpen) app.appendChild(renderSettings(state));
     if (shopOpen) app.appendChild(renderShop(state));
+    if (dailyOpen) app.appendChild(renderDailyReport(state));
   }
 
   let currentState = null;
@@ -664,8 +778,63 @@ window.Garden = window.Garden || {};
         return;
       }
 
+      // Daily report: open / close / backdrop / claim / spin
+      if (ev.target.closest("[data-action='open-daily']")) {
+        dailyOpen = true;
+        renderAll(currentState);
+        return;
+      }
+      if (ev.target.closest("[data-action='close-daily']")) {
+        dailyOpen = false;
+        renderAll(currentState);
+        return;
+      }
+      const dailyBackdrop = ev.target.closest("[data-action='daily-backdrop']");
+      if (dailyBackdrop && !ev.target.closest(".modal-content")) {
+        dailyOpen = false;
+        renderAll(currentState);
+        return;
+      }
+      const claimBtn = ev.target.closest("[data-action='daily-claim']");
+      if (claimBtn) {
+        const result = Garden.daily.claimStreak(currentState);
+        if (result.ok && Garden.fx) {
+          Garden.fx.toast("Day " + result.position + " reward: " + streakRewardLabel(result.reward), { variant: "level" });
+        }
+        Garden.storage.save(currentState);
+        renderAll(currentState);
+        return;
+      }
+      const spinBtn = ev.target.closest("[data-action='daily-spin']");
+      if (spinBtn && !spinBtn.disabled) {
+        const result = Garden.daily.spinDraw(currentState);
+        if (!result.ok) return;
+        Garden.storage.save(currentState);
+        spinBtn.disabled = true;
+        // Cycling-highlight animation that lands on the won prize (~1.5-2s),
+        // then rerender + toast. No rerender during the animation.
+        const icons = Array.from(document.querySelectorAll(".draw-prize"));
+        const target = icons.findIndex(n => n.dataset.prizeId === result.prizeId);
+        let i = 0;
+        const steps = 12 + (target >= 0 ? target : 0);
+        const timer = setInterval(() => {
+          icons.forEach(n => n.classList.remove("spin-active"));
+          icons[i % icons.length].classList.add("spin-active");
+          if (i >= steps) {
+            clearInterval(timer);
+            const msg = result.coins
+              ? "+" + result.coins + " coins!"
+              : "You won: " + result.label + "!";
+            if (Garden.fx) Garden.fx.toast("Lucky draw: " + msg, { variant: "rare" });
+            renderAll(currentState);
+          }
+          i++;
+        }, 120);
+        return;
+      }
+
       // When any modal is open, swallow other clicks.
-      if (catalogOpen || settingsOpen || shopOpen) return;
+      if (catalogOpen || settingsOpen || shopOpen || dailyOpen) return;
 
       // Potion inventory click — toggle use-mode
       const potionEl = ev.target.closest(".potion-card");
@@ -714,6 +883,9 @@ window.Garden = window.Garden || {};
         if (currentState) renderAll(currentState);
       } else if (catalogOpen) {
         catalogOpen = false;
+        if (currentState) renderAll(currentState);
+      } else if (dailyOpen) {
+        dailyOpen = false;
         if (currentState) renderAll(currentState);
       } else if (selectedPotionId) {
         selectedPotionId = null;
@@ -824,5 +996,6 @@ window.Garden = window.Garden || {};
     renderDecorationZone, renderShop, renderSettings, renderCatalog, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
     getSelectedSeedId: () => selectedSeedId,
+    openDailyReport: (recap) => { dailyOpen = true; dailyRecap = recap || null; },
   };
 })(window.Garden);
