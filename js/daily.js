@@ -53,13 +53,19 @@ window.Garden = window.Garden || {};
     { day: 7, coins: 500, mysterySeed: 1 },
   ];
 
-  // Cycle position (1-7) the NEXT claim will award, after any rewind.
-  function nextStreakPosition(daily, today) {
+  // Rewind rule: a gap of more than 1 calendar day since the last CLAIM
+  // slips the streak back one step (never a full reset).
+  function rewoundCount(daily, today) {
     let count = daily.streakCount;
     if (daily.lastClaimDay && dayDiff(daily.lastClaimDay, today) > 1) {
       count = Math.max(0, count - 1);
     }
-    return (count % 7) + 1;
+    return count;
+  }
+
+  // Cycle position (1-7) the NEXT claim will award, after any rewind.
+  function nextStreakPosition(daily, today) {
+    return (rewoundCount(daily, today) % STREAK_REWARDS.length) + 1;
   }
 
   function canClaimStreak(state, now) {
@@ -71,12 +77,8 @@ window.Garden = window.Garden || {};
     const today = todayKey(now);
     if (daily.lastClaimDay === today) return { ok: false, reason: "claimed" };
 
-    // Rewind rule: a gap of more than 1 calendar day since the last CLAIM
-    // slips the streak back one step (never a full reset).
-    if (daily.lastClaimDay && dayDiff(daily.lastClaimDay, today) > 1) {
-      daily.streakCount = Math.max(0, daily.streakCount - 1);
-    }
-    const position = (daily.streakCount % 7) + 1;
+    daily.streakCount = rewoundCount(daily, today);
+    const position = (daily.streakCount % STREAK_REWARDS.length) + 1;
     const reward = STREAK_REWARDS[position - 1];
 
     if (!state.inventory) state.inventory = {};
