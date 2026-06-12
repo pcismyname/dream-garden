@@ -462,7 +462,7 @@ window.Garden = window.Garden || {};
     const canSpinNow = Garden.daily.canSpin(state);
     const nextPos = Garden.daily.nextStreakPosition(daily, today);
     // Highlight the position up next; after claiming, the one just claimed.
-    const highlightPos = canClaim ? nextPos : ((daily.streakCount - 1) % 7) + 1;
+    const highlightPos = canClaim ? nextPos : ((daily.streakCount - 1) % Garden.daily.STREAK_REWARDS.length) + 1;
 
     const overlay = el(`
       <div class="modal-overlay" data-action="daily-backdrop">
@@ -781,6 +781,7 @@ window.Garden = window.Garden || {};
       // Daily report: open / close / backdrop / claim / spin
       if (ev.target.closest("[data-action='open-daily']")) {
         dailyOpen = true;
+        dailyRecap = null;
         renderAll(currentState);
         return;
       }
@@ -811,22 +812,33 @@ window.Garden = window.Garden || {};
         if (!result.ok) return;
         Garden.storage.save(currentState);
         spinBtn.disabled = true;
-        // Cycling-highlight animation that lands on the won prize (~1.5-2s),
-        // then rerender + toast. No rerender during the animation.
-        const icons = Array.from(document.querySelectorAll(".draw-prize"));
-        const target = icons.findIndex(n => n.dataset.prizeId === result.prizeId);
-        let i = 0;
+        // Cycling-highlight animation (~1.5-2s) that lands on the won prize.
+        // Nodes are re-queried every step: tick() may rebuild the modal mid-spin.
+        const target = Garden.daily.DRAW_PRIZES.findIndex(p => p.id === result.prizeId);
         const steps = 12 + (target >= 0 ? target : 0);
+        let i = 0;
+        const finish = () => {
+          const msg = result.coins
+            ? "+" + result.coins + " coins!"
+            : "You won: " + result.label + "!";
+          if (Garden.fx) Garden.fx.toast("Lucky draw: " + msg, { variant: "rare" });
+        };
         const timer = setInterval(() => {
+          const icons = Array.from(document.querySelectorAll(".draw-prize"));
+          if (!dailyOpen || icons.length === 0) {
+            // Modal closed mid-spin — skip the show, just announce the prize.
+            clearInterval(timer);
+            finish();
+            renderAll(currentState);
+            return;
+          }
           icons.forEach(n => n.classList.remove("spin-active"));
           icons[i % icons.length].classList.add("spin-active");
           if (i >= steps) {
             clearInterval(timer);
-            const msg = result.coins
-              ? "+" + result.coins + " coins!"
-              : "You won: " + result.label + "!";
-            if (Garden.fx) Garden.fx.toast("Lucky draw: " + msg, { variant: "rare" });
-            renderAll(currentState);
+            finish();
+            // Leave the winner highlighted briefly before the rerender wipes it.
+            setTimeout(() => renderAll(currentState), 900);
           }
           i++;
         }, 120);
