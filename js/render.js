@@ -160,7 +160,10 @@ window.Garden = window.Garden || {};
         const stage = Garden.state.getStage(plot, now);
         const content = document.createElement("div");
         content.className = "plot-content";
-        content.innerHTML = Garden.svg.flowerSvg(plot.flowerId, stage);
+        const hideFlower = plot.mystery && stage !== "bloomed" && stage !== "wilted";
+        content.innerHTML = hideFlower
+          ? Garden.svg.mysterySproutSvg(stage)
+          : Garden.svg.flowerSvg(plot.flowerId, stage);
         plotEl.appendChild(content);
 
         if (stage === "bloomed") {
@@ -552,11 +555,18 @@ window.Garden = window.Garden || {};
   function renderQuests(state) {
     const quests = (state.quests || []);
     if (quests.length === 0) return null;
+    const fresh = quests.every(q => q.progress === 0);
+    const today = Garden.daily ? Garden.daily.todayKey() : null;
+    const chestDone = !!(state.daily && state.daily.chestDay === today);
 
     const wrap = el(`
       <div class="quests-bar">
-        <div class="quests-label">Orders</div>
+        <div class="quests-label">Daily Orders${fresh ? ' <span class="new-badge">NEW</span>' : ""}</div>
         <div class="quests-list"></div>
+        <div class="quest-chest ${chestDone ? "chest-open" : ""}" title="Complete all 3 daily orders for a bonus chest">
+          <div class="chest-icon">${Garden.svg.CHEST_ICON}</div>
+          <div class="chest-text">${chestDone ? "Chest claimed! ✓" : "Complete all 3 for a bonus chest"}</div>
+        </div>
       </div>
     `);
     const list = wrap.querySelector(".quests-list");
@@ -564,15 +574,17 @@ window.Garden = window.Garden || {};
     quests.forEach(q => {
       const flower = Garden.flowerById(q.flowerId);
       if (!flower) return; // defensive
+      const done = q.progress >= q.target;
       const pct = Math.min(100, Math.floor((q.progress / q.target) * 100));
       const card = el(`
-        <div class="quest-card">
+        <div class="quest-card ${done ? "quest-done" : ""}">
           <div class="quest-icon">${Garden.svg.flowerIcon(q.flowerId)}</div>
           <div class="quest-info">
             <div class="quest-text">Deliver ${q.target} ${pluralize(flower.name, q.target)}</div>
             <div class="quest-progress-bar"><div class="quest-progress-fill" style="width:${pct}%"></div></div>
             <div class="quest-count">${q.progress}/${q.target}</div>
           </div>
+          ${done ? '<div class="quest-done-check">✓</div>' : ""}
         </div>
       `);
       list.appendChild(card);
@@ -617,15 +629,36 @@ window.Garden = window.Garden || {};
       seedsEl.appendChild(card);
     });
 
+    const mysteryCount = (state.inventory && state.inventory.mysterySeed) || 0;
+    if (mysteryCount > 0) {
+      const card = document.createElement("div");
+      card.className = "seed-card mystery-seed" + (selectedSeedId === "mysterySeed" ? " selected" : "");
+      card.dataset.flowerId = "mysterySeed";
+      card.innerHTML = `
+        <div class="seed-icon">${Garden.svg.MYSTERY_ICON}</div>
+        <div class="seed-info">
+          <div class="seed-name">Mystery</div>
+          <span class="seed-cost">×${mysteryCount} · free</span>
+        </div>
+      `;
+      seedsEl.appendChild(card);
+    }
+
     return wrap;
   }
 
   function renderAll(state) {
     currentState = state;
 
-    // Ensure selectedSeedId is still unlocked; otherwise pick the first unlocked.
-    const selectedFlower = Garden.flowerById(selectedSeedId);
-    if (!selectedFlower || state.level < selectedFlower.levelReq) {
+    // Ensure selectedSeedId is still valid; otherwise pick the first unlocked.
+    if (selectedSeedId === "mysterySeed") {
+      const count = (state.inventory && state.inventory.mysterySeed) || 0;
+      if (count <= 0) selectedSeedId = null;
+    } else {
+      const selectedFlower = Garden.flowerById(selectedSeedId);
+      if (!selectedFlower || state.level < selectedFlower.levelReq) selectedSeedId = null;
+    }
+    if (!selectedSeedId) {
       const firstUnlocked = Garden.FLOWERS.find(f => state.level >= f.levelReq);
       selectedSeedId = firstUnlocked ? firstUnlocked.id : null;
     }
@@ -948,7 +981,11 @@ window.Garden = window.Garden || {};
 
     if (!plot) {
       if (!selectedSeedId) return;
-      Garden.state.plant(state, idx, selectedSeedId);
+      if (selectedSeedId === "mysterySeed") {
+        Garden.state.plantMystery(state, idx);
+      } else {
+        Garden.state.plant(state, idx, selectedSeedId);
+      }
     } else {
       const stage = Garden.state.getStage(plot, now);
       if (stage === "seed") Garden.state.water(state, idx);
@@ -992,6 +1029,13 @@ window.Garden = window.Garden || {};
       Garden.fx.toast(
         "Order complete: " + qc.target + " × " + name + "  +" + qc.coinBonus + "c  +" + qc.xpBonus + " XP",
         { variant: "quest" }
+      );
+    }
+    if (result.chestAwarded && Garden.fx) {
+      const potion = Garden.potionById(result.chestAwarded.potionId);
+      Garden.fx.toast(
+        "Daily chest! +" + result.chestAwarded.coins + "c and a " + (potion ? potion.name : "potion"),
+        { variant: "rare" }
       );
     }
     if (result.leveledUp && Garden.fx) {
