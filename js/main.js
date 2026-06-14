@@ -12,6 +12,29 @@ window.Garden = window.Garden || {};
   function tick() {
     if (!state) return;
     const now = Date.now();
+
+    // Reveal mystery plots when they bloom (or wilt unbloomed-seen):
+    // record rare discovery once, then drop the mystery flag.
+    let revealed = false;
+    state.plots.forEach(plot => {
+      if (!plot || !plot.mystery) return;
+      const stage = Garden.state.getStage(plot, now);
+      if (stage !== "bloomed" && stage !== "wilted") return;
+      delete plot.mystery;
+      revealed = true;
+      const flower = Garden.flowerById(plot.flowerId);
+      if (flower && flower.rare) {
+        if (!state.discovered) state.discovered = {};
+        if (!state.discovered[flower.id] && Garden.fx) {
+          Garden.fx.toast("Mystery seed revealed: " + flower.name + "! (RARE)", { variant: "rare" });
+        }
+        state.discovered[flower.id] = true;
+      } else if (flower && Garden.fx) {
+        Garden.fx.toast("Mystery seed revealed: " + flower.name + "!", { variant: "level" });
+      }
+    });
+    if (revealed) Garden.storage.save(state);
+
     const sig = stageSignature(state, now);
 
     if (sig !== lastStageSig) {
@@ -79,6 +102,15 @@ window.Garden = window.Garden || {};
     }
     if (!state.inventory || typeof state.inventory !== "object") {
       state.inventory = {};
+    }
+    // Daily systems: recap must be computed BEFORE the first save of this
+    // session overwrites daily.lastSeenAt.
+    Garden.daily.ensureDaily(state);
+    const recap = Garden.daily.computeRecap(state);
+    Garden.daily.rolloverQuests(state);
+    Garden.storage.save(state);
+    if (Garden.daily.claimablesCount(state) > 0) {
+      Garden.render.openDailyReport(recap);
     }
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
