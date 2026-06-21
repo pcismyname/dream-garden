@@ -695,6 +695,7 @@ window.Garden = window.Garden || {};
 
       // Catalog: open / close / backdrop
       if (ev.target.closest("[data-action='open-catalog']")) {
+        if (Garden.audio) Garden.audio.playSfx("ui-click");
         catalogOpen = true;
         renderAll(currentState);
         return;
@@ -713,6 +714,7 @@ window.Garden = window.Garden || {};
 
       // Settings: open / close / backdrop
       if (ev.target.closest("[data-action='open-settings']")) {
+        if (Garden.audio) Garden.audio.playSfx("ui-click");
         settingsOpen = true;
         renderAll(currentState);
         return;
@@ -731,6 +733,7 @@ window.Garden = window.Garden || {};
 
       // Shop: open / close / backdrop / buy / remove
       if (ev.target.closest("[data-action='open-shop']")) {
+        if (Garden.audio) Garden.audio.playSfx("ui-click");
         shopOpen = true;
         renderAll(currentState);
         return;
@@ -813,6 +816,7 @@ window.Garden = window.Garden || {};
 
       // Daily report: open / close / backdrop / claim / spin
       if (ev.target.closest("[data-action='open-daily']")) {
+        if (Garden.audio) Garden.audio.playSfx("ui-click");
         dailyOpen = true;
         dailyRecap = null;
         renderAll(currentState);
@@ -986,16 +990,24 @@ window.Garden = window.Garden || {};
       } else {
         Garden.state.plant(state, idx, selectedSeedId);
       }
+      if (Garden.audio) Garden.audio.playSfx("plant");
     } else {
       const stage = Garden.state.getStage(plot, now);
-      if (stage === "seed") Garden.state.water(state, idx);
-      else if (stage === "watered") Garden.state.sun(state, idx);
+      if (stage === "seed") {
+        Garden.state.water(state, idx);
+        if (Garden.audio) Garden.audio.playSfx("water");
+      }
+      else if (stage === "watered") {
+        Garden.state.sun(state, idx);
+        if (Garden.audio) Garden.audio.playSfx("sun");
+      }
       else if (stage === "bloomed") {
         // Capture position BEFORE the DOM is torn down by renderAll,
         // so the floating numbers can spawn at the right spot.
         const plotEls = document.querySelectorAll(".plot");
         if (plotEls[idx]) plotRect = plotEls[idx].getBoundingClientRect();
         harvestResult = Garden.state.harvest(state, idx);
+        if (Garden.audio) Garden.audio.playSfx("harvest");
       }
       else if (stage === "wilted") Garden.state.clear(state, idx);
       // growing → no-op
@@ -1030,6 +1042,7 @@ window.Garden = window.Garden || {};
         "Order complete: " + qc.target + " × " + name + "  +" + qc.coinBonus + "c  +" + qc.xpBonus + " XP",
         { variant: "quest" }
       );
+      if (Garden.audio) Garden.audio.playSfx("quest-complete");
     }
     if (result.chestAwarded && Garden.fx) {
       const potion = Garden.potionById(result.chestAwarded.potionId);
@@ -1037,6 +1050,7 @@ window.Garden = window.Garden || {};
         "Daily chest! +" + result.chestAwarded.coins + "c and a " + (potion ? potion.name : "potion"),
         { variant: "rare" }
       );
+      if (Garden.audio) Garden.audio.playSfx("chest");
     }
     if (result.leveledUp && Garden.fx) {
       const newUnlock = Garden.FLOWERS.find(f => f.levelReq === result.newLevel);
@@ -1044,6 +1058,7 @@ window.Garden = window.Garden || {};
         ? "Level " + result.newLevel + "! " + newUnlock.name + " unlocked."
         : "Level " + result.newLevel + " reached!";
       Garden.fx.toast(text, { variant: "level" });
+      if (Garden.audio) Garden.audio.playSfx("level-up");
     }
   }
 
