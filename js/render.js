@@ -819,12 +819,11 @@ window.Garden = window.Garden || {};
     app.appendChild(panel);
     app.appendChild(renderTabBar(state));
 
-    // Overlays (Catalog, Settings, Shop, Daily modal) still apply on mobile —
-    // tapping the top-bar 📖 / ⚙ buttons opens these; the tabs are a separate path.
+    // Catalog and Settings are overlay modals on both shapes. Shop and Daily
+    // live as tabs on mobile — their overlay versions are never rendered here
+    // (handlers below switch tabs on mobile instead of setting shopOpen/dailyOpen).
     if (catalogOpen) app.appendChild(renderCatalog(state));
     if (settingsOpen) app.appendChild(renderSettings(state));
-    if (shopOpen) app.appendChild(renderShop(state));
-    if (dailyOpen) app.appendChild(renderDailyReport(state));
   }
 
   function renderAll(state) {
@@ -924,12 +923,20 @@ window.Garden = window.Garden || {};
       // Shop: open / close / backdrop / buy / remove
       if (ev.target.closest("[data-action='open-shop']")) {
         if (Garden.audio) Garden.audio.playSfx("ui-click");
-        shopOpen = true;
+        if (viewport === "mobile") {
+          currentTab = "shop";
+        } else {
+          shopOpen = true;
+        }
         renderAll(currentState);
         return;
       }
       if (ev.target.closest("[data-action='close-shop']")) {
-        shopOpen = false;
+        if (viewport === "mobile") {
+          currentTab = "garden";
+        } else {
+          shopOpen = false;
+        }
         renderAll(currentState);
         return;
       }
@@ -1007,13 +1014,21 @@ window.Garden = window.Garden || {};
       // Daily report: open / close / backdrop / claim / spin
       if (ev.target.closest("[data-action='open-daily']")) {
         if (Garden.audio) Garden.audio.playSfx("ui-click");
-        dailyOpen = true;
         dailyRecap = null;
+        if (viewport === "mobile") {
+          currentTab = "daily";
+        } else {
+          dailyOpen = true;
+        }
         renderAll(currentState);
         return;
       }
       if (ev.target.closest("[data-action='close-daily']")) {
-        dailyOpen = false;
+        if (viewport === "mobile") {
+          currentTab = "garden";
+        } else {
+          dailyOpen = false;
+        }
         renderAll(currentState);
         return;
       }
