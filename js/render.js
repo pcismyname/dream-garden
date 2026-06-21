@@ -795,22 +795,25 @@ window.Garden = window.Garden || {};
       const questsEl = renderQuests(state);
       if (questsEl) panel.appendChild(questsEl);
     } else if (currentTab === "shop") {
-      // Shop tab content is wired in Task 4; for this task it just shows a placeholder
-      // so the tab-switching plumbing is testable.
-      const stub = document.createElement("div");
-      stub.style.padding = "16px";
-      stub.style.textAlign = "center";
-      stub.style.color = "#5a3e0a";
-      stub.textContent = "Shop tab content lands in Task 4.";
-      panel.appendChild(stub);
+      // Reuse the modal renderer, then pluck out its inner content so it
+      // displays inline in the tab panel instead of as an overlay.
+      const shopOverlay = renderShop(state);
+      const shopContent = shopOverlay.querySelector(".modal-content");
+      if (shopContent) {
+        shopContent.classList.add("tab-embedded");
+        panel.appendChild(shopContent);
+      } else {
+        panel.appendChild(shopOverlay);  // defensive — fall back to overlay if structure changes
+      }
     } else if (currentTab === "daily") {
-      // Same — wired in Task 4.
-      const stub = document.createElement("div");
-      stub.style.padding = "16px";
-      stub.style.textAlign = "center";
-      stub.style.color = "#5a3e0a";
-      stub.textContent = "Daily tab content lands in Task 4.";
-      panel.appendChild(stub);
+      const dailyOverlay = renderDailyReport(state);
+      const dailyContent = dailyOverlay.querySelector(".modal-content");
+      if (dailyContent) {
+        dailyContent.classList.add("tab-embedded");
+        panel.appendChild(dailyContent);
+      } else {
+        panel.appendChild(dailyOverlay);
+      }
     }
 
     app.appendChild(panel);
@@ -1256,6 +1259,16 @@ window.Garden = window.Garden || {};
     renderDecorationZone, renderShop, renderSettings, renderCatalog, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
     getSelectedSeedId: () => selectedSeedId,
-    openDailyReport: (recap) => { dailyOpen = true; dailyRecap = recap || null; },
+    openDailyReport: (recap) => {
+      dailyRecap = recap || null;
+      // On mobile the Daily content lives in a tab — switch to it instead
+      // of stacking a modal on top of the tab panel.
+      syncViewport();
+      if (viewport === "mobile") {
+        currentTab = "daily";
+      } else {
+        dailyOpen = true;
+      }
+    },
   };
 })(window.Garden);
