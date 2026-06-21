@@ -24,6 +24,7 @@ window.Garden = window.Garden || {};
       revealed = true;
       const flower = Garden.flowerById(plot.flowerId);
       if (flower && flower.rare) {
+        if (Garden.audio) Garden.audio.playSfx("rare-sparkle");
         if (!state.discovered) state.discovered = {};
         if (!state.discovered[flower.id] && Garden.fx) {
           Garden.fx.toast("Mystery seed revealed: " + flower.name + "! (RARE)", { variant: "rare" });
