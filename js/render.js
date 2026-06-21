@@ -452,17 +452,17 @@ window.Garden = window.Garden || {};
             </label>
             <label class="setting-row">
               <span>
-                <span class="setting-name">Music</span>
+                <span class="setting-name">Music <span class="setting-value" data-volume-label="musicVolume">${settings.musicVolume}%</span></span>
                 <span class="setting-desc">Cozy background music loop</span>
               </span>
-              <input type="checkbox" data-setting="musicOn" ${settings.musicOn ? "checked" : ""}>
+              <input type="range" min="0" max="100" step="1" data-setting="musicVolume" value="${settings.musicVolume}" class="setting-slider">
             </label>
             <label class="setting-row">
               <span>
-                <span class="setting-name">Sound effects</span>
+                <span class="setting-name">Sound effects <span class="setting-value" data-volume-label="sfxVolume">${settings.sfxVolume}%</span></span>
                 <span class="setting-desc">Plant, water, harvest, rewards</span>
               </span>
-              <input type="checkbox" data-setting="sfxOn" ${settings.sfxOn ? "checked" : ""}>
+              <input type="range" min="0" max="100" step="1" data-setting="sfxVolume" value="${settings.sfxVolume}" class="setting-slider">
             </label>
           </section>
         </div>
@@ -1145,6 +1145,23 @@ window.Garden = window.Garden || {};
       const key = cb.dataset.setting;
       if (!currentState.settings) currentState.settings = {};
       currentState.settings[key] = cb.checked;
+      Garden.storage.save(currentState);
+    });
+
+    // Range-slider drag events (separate from checkbox change events above).
+    // Fires on every drag tick so audio + label + localStorage stay live.
+    app.addEventListener("input", (ev) => {
+      if (!currentState) return;
+      const sl = ev.target.closest("input[type='range'][data-setting]");
+      if (!sl) return;
+      const key = sl.dataset.setting;
+      if (!currentState.settings) currentState.settings = {};
+      const n = Math.max(0, Math.min(100, Math.round(Number(sl.value) || 0)));
+      currentState.settings[key] = n;
+      if (key === "musicVolume" && Garden.audio) Garden.audio.setMusicVolume(n);
+      if (key === "sfxVolume" && Garden.audio) Garden.audio.setSfxVolume(n);
+      const label = document.querySelector("[data-volume-label='" + key + "']");
+      if (label) label.textContent = n + "%";
       Garden.storage.save(currentState);
     });
   }
