@@ -695,21 +695,13 @@ window.Garden = window.Garden || {};
     app.appendChild(renderTopBar(state));
 
     // Left column: seeds + inventory (potions).
+    // renderShelf and renderInventory each carry their own internal label —
+    // no extra section chip needed here.
     const left = document.createElement("div");
     left.className = "desktop-left";
-    const seedsLabel = document.createElement("div");
-    seedsLabel.className = "desktop-section-label";
-    seedsLabel.textContent = "Seeds";
-    left.appendChild(seedsLabel);
     left.appendChild(renderShelf(state));
     const invEl = renderInventory(state);
-    if (invEl) {
-      const invLabel = document.createElement("div");
-      invLabel.className = "desktop-section-label";
-      invLabel.textContent = "Potions";
-      left.appendChild(invLabel);
-      left.appendChild(invEl);
-    }
+    if (invEl) left.appendChild(invEl);
     app.appendChild(left);
 
     // Center column: garden grid + decoration strip below.
@@ -723,12 +715,10 @@ window.Garden = window.Garden || {};
     app.appendChild(center);
 
     // Right column: quests + daily preview.
+    // renderQuests carries its own "Daily Orders" label; daily-preview block
+    // does not, so we keep the chip above it for visual grouping.
     const right = document.createElement("div");
     right.className = "desktop-right";
-    const questsLabel = document.createElement("div");
-    questsLabel.className = "desktop-section-label";
-    questsLabel.textContent = "Today's orders";
-    right.appendChild(questsLabel);
     const questsEl = renderQuests(state);
     if (questsEl) right.appendChild(questsEl);
     const dailyLabel = document.createElement("div");

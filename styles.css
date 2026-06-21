@@ -942,18 +942,24 @@ body {
   overflow-y: auto;
 }
 
-/* Seeds become a vertical strip in the left column. */
-#app.shape-desktop .seed-shelf {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+/* Seed shelf in the left column: drop the cream background + top border that
+   the legacy bottom-shelf layout used, and stack seeds vertically inside the
+   narrow column instead of horizontal scroll. */
+#app.shape-desktop .shelf {
   background: transparent;
-  border: none;
+  border-top: none;
   padding: 0;
 }
 
-#app.shape-desktop .seed-shelf .seed-card {
+#app.shape-desktop .shelf .seeds {
+  flex-direction: column;
+  gap: 6px;
+  overflow-x: visible;
+}
+
+#app.shape-desktop .shelf .seed-card {
   width: 100%;
+  white-space: normal;
 }
 
 /* Inventory bar becomes a vertical block in the left column. */
