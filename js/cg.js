@@ -44,10 +44,15 @@ window.Garden = window.Garden || {};
     started = true;
     return ready().then(() => {
       try {
-        const result = window.CrazyGames.SDK.game.gameplayStart();
-        // SDK call returns a Promise that rejects with "disabled on this domain"
-        // when not running inside a CrazyGames iframe. Same defensive pattern
-        // as musicEl.play() in js/audio.js — silently swallow the rejection.
+        const sdk = window.CrazyGames.SDK;
+        // SDK reports environment "disabled" off the CrazyGames platform
+        // (e.g., the public GitHub Pages site). Calling gameplayStart()
+        // in that state triggers a synchronous console.error from inside
+        // the SDK that no outside catch can suppress — so we skip the call.
+        if (sdk.environment === "disabled") return;
+        const result = sdk.game.gameplayStart();
+        // Inside the CG iframe the call returns a Promise; swallow rejections
+        // defensively (same pattern as musicEl.play() in js/audio.js).
         if (result && typeof result.catch === "function") result.catch(() => {});
       } catch (_) { /* synchronous throw — swallow */ }
     }, () => { /* SDK never appeared — silent fall-through */ });
