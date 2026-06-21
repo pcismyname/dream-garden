@@ -1192,5 +1192,12 @@ body {
 /* Modal close button on mobile: enlarge tap region without enlarging visible glyph. */
 #app.shape-mobile .modal-close {
   padding: 12px;
-  font-size: 18px;
+}
+
+/* Garden grid uses fixed 72px columns; on narrow phones (5x5 grid > viewport),
+   allow horizontal scroll inside the garden container rather than pushing
+   the page body sideways. */
+#app.shape-mobile .garden {
+  overflow-x: auto;
+  max-width: 100%;
 }
