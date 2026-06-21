@@ -81,10 +81,12 @@ window.Garden = window.Garden || {};
       }
       Garden.storage.save(state);
     }
-    if (!state.settings) state.settings = { floatingNumbers: true };
+    if (!state.settings) state.settings = { floatingNumbers: true, musicOn: true, sfxOn: true };
     if (typeof state.settings.floatingNumbers !== "boolean") {
       state.settings.floatingNumbers = true;
     }
+    if (typeof state.settings.musicOn !== "boolean") state.settings.musicOn = true;
+    if (typeof state.settings.sfxOn !== "boolean") state.settings.sfxOn = true;
     if (!Array.isArray(state.decorations) || state.decorations.length !== Garden.DECORATION_SLOTS) {
       state.decorations = new Array(Garden.DECORATION_SLOTS).fill(null);
     }
