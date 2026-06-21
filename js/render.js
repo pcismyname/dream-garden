@@ -767,7 +767,7 @@ window.Garden = window.Garden || {};
       btn.className = "tab-button" + (currentTab === t.id ? " active" : "");
       btn.setAttribute("data-action", "switch-tab");
       btn.setAttribute("data-tab", t.id);
-      let html = '<span class="tb-icon">' + t.icon + '</span><span>' + t.label + '</span>';
+      let html = '<span class="tb-icon" aria-hidden="true">' + t.icon + '</span><span>' + t.label + '</span>';
       if (t.badge) html += '<span class="tb-badge">' + t.badge + '</span>';
       btn.innerHTML = html;
       bar.appendChild(btn);
