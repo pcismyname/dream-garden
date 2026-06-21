@@ -1175,11 +1175,11 @@ body {
   min-height: 44px;
 }
 
-/* On mobile, seed cards in the Garden tab need to be tappable thumbs. */
+/* On mobile, the various tappable cards in Garden / Shop tabs need finger-thumb
+   targets. .shop-card covers both pot and decoration shop cards. */
 #app.shape-mobile .seed-card,
-#app.shape-mobile .pot-card,
-#app.shape-mobile .potion-card,
-#app.shape-mobile .decoration-card {
+#app.shape-mobile .shop-card,
+#app.shape-mobile .potion-card {
   min-height: 56px;
 }
 
