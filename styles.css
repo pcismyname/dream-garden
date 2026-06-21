@@ -966,11 +966,17 @@ body {
   padding: 0;
 }
 
-/* Quest panel becomes a vertical block in the right column. */
-#app.shape-desktop .quests-panel {
+/* Quest bar wrapper becomes a vertical block in the right column. */
+#app.shape-desktop .quests-bar {
   position: static;
   width: auto;
   max-width: none;
+}
+
+/* Quest cards stack vertically in the column instead of horizontal scroll. */
+#app.shape-desktop .quests-list {
+  flex-direction: column;
+  overflow-x: visible;
 }
 
 /* Desktop right column header chips. */

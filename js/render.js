@@ -680,7 +680,7 @@ window.Garden = window.Garden || {};
     const day = (state.daily && state.daily.streakCount) ? (state.daily.streakCount % 7) + 1 : 1;
     let html = '<div class="dp-line"><b>Day ' + day + '</b> of 7-day streak</div>';
     if (claimables > 0) {
-      html += '<div class="dp-line">⚡ ' + claimables + ' to claim — tap to open</div>';
+      html += '<div class="dp-line">⚡ ' + claimables + ' to claim — click to open</div>';
     } else {
       html += '<div class="dp-line">All caught up today.</div>';
     }
