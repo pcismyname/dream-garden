@@ -746,6 +746,84 @@ window.Garden = window.Garden || {};
     if (dailyOpen) app.appendChild(renderDailyReport(state));
   }
 
+  function renderTabBar(state) {
+    const claimables = Garden.daily ? Garden.daily.claimablesCount(state) : 0;
+    const questsAdvancing = Array.isArray(state.quests)
+      ? state.quests.some(q => q && q.progress > 0 && q.progress < q.target)
+      : false;
+
+    const bar = document.createElement("div");
+    bar.className = "tab-bar";
+
+    const tabs = [
+      { id: "garden", icon: "🌱", label: "Garden", badge: null },
+      { id: "orders", icon: "📋", label: "Orders", badge: questsAdvancing ? "•" : null },
+      { id: "shop",   icon: "🛒", label: "Shop",   badge: null },
+      { id: "daily",  icon: "📅", label: "Daily",  badge: claimables > 0 ? String(claimables) : null },
+    ];
+
+    for (const t of tabs) {
+      const btn = document.createElement("button");
+      btn.className = "tab-button" + (currentTab === t.id ? " active" : "");
+      btn.setAttribute("data-action", "switch-tab");
+      btn.setAttribute("data-tab", t.id);
+      let html = '<span class="tb-icon">' + t.icon + '</span><span>' + t.label + '</span>';
+      if (t.badge) html += '<span class="tb-badge">' + t.badge + '</span>';
+      btn.innerHTML = html;
+      bar.appendChild(btn);
+    }
+    return bar;
+  }
+
+  function renderMobileBody(state) {
+    const app = document.getElementById("app");
+    app.appendChild(renderTopBar(state));
+
+    const panel = document.createElement("div");
+    panel.className = "tab-panel tab-panel-" + currentTab;
+
+    if (currentTab === "garden") {
+      panel.appendChild(renderShelf(state));
+      const gardenEl = renderGrid(state);
+      if (selectedPotionId) gardenEl.classList.add("potion-use-mode");
+      panel.appendChild(gardenEl);
+      const invEl = renderInventory(state);
+      if (invEl) panel.appendChild(invEl);
+      const decoZone = renderDecorationZone(state);
+      if (decoZone) panel.appendChild(decoZone);
+    } else if (currentTab === "orders") {
+      const questsEl = renderQuests(state);
+      if (questsEl) panel.appendChild(questsEl);
+    } else if (currentTab === "shop") {
+      // Shop tab content is wired in Task 4; for this task it just shows a placeholder
+      // so the tab-switching plumbing is testable.
+      const stub = document.createElement("div");
+      stub.style.padding = "16px";
+      stub.style.textAlign = "center";
+      stub.style.color = "#5a3e0a";
+      stub.textContent = "Shop tab content lands in Task 4.";
+      panel.appendChild(stub);
+    } else if (currentTab === "daily") {
+      // Same — wired in Task 4.
+      const stub = document.createElement("div");
+      stub.style.padding = "16px";
+      stub.style.textAlign = "center";
+      stub.style.color = "#5a3e0a";
+      stub.textContent = "Daily tab content lands in Task 4.";
+      panel.appendChild(stub);
+    }
+
+    app.appendChild(panel);
+    app.appendChild(renderTabBar(state));
+
+    // Overlays (Catalog, Settings, Shop, Daily modal) still apply on mobile —
+    // tapping the top-bar 📖 / ⚙ buttons opens these; the tabs are a separate path.
+    if (catalogOpen) app.appendChild(renderCatalog(state));
+    if (settingsOpen) app.appendChild(renderSettings(state));
+    if (shopOpen) app.appendChild(renderShop(state));
+    if (dailyOpen) app.appendChild(renderDailyReport(state));
+  }
+
   function renderAll(state) {
     currentState = state;
 
@@ -769,23 +847,7 @@ window.Garden = window.Garden || {};
     if (viewport === "desktop") {
       renderDesktopBody(state);
     } else {
-      // Mobile body is added in Task 3. Until then, render the legacy single-column
-      // layout so phone viewport still works during the transition.
-      app.appendChild(renderTopBar(state));
-      const questsEl = renderQuests(state);
-      if (questsEl) app.appendChild(questsEl);
-      const gardenEl = renderGrid(state);
-      const decoZone = renderDecorationZone(state);
-      if (decoZone) gardenEl.appendChild(decoZone);
-      if (selectedPotionId) gardenEl.classList.add("potion-use-mode");
-      app.appendChild(gardenEl);
-      const inventoryEl = renderInventory(state);
-      if (inventoryEl) app.appendChild(inventoryEl);
-      app.appendChild(renderShelf(state));
-      if (catalogOpen) app.appendChild(renderCatalog(state));
-      if (settingsOpen) app.appendChild(renderSettings(state));
-      if (shopOpen) app.appendChild(renderShop(state));
-      if (dailyOpen) app.appendChild(renderDailyReport(state));
+      renderMobileBody(state);
     }
   }
 
@@ -806,6 +868,17 @@ window.Garden = window.Garden || {};
 
     app.addEventListener("click", (ev) => {
       if (!currentState) return;
+
+      const tabBtn = ev.target.closest("[data-action='switch-tab']");
+      if (tabBtn) {
+        const next = tabBtn.dataset.tab;
+        if (next && next !== currentTab) {
+          if (Garden.audio) Garden.audio.playSfx("ui-click");
+          currentTab = next;
+          renderAll(currentState);
+        }
+        return;
+      }
 
       // Catalog: open / close / backdrop
       if (ev.target.closest("[data-action='open-catalog']")) {

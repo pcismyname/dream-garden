@@ -1013,3 +1013,114 @@ body {
 #app.shape-desktop .daily-preview .dp-line:last-child {
   margin-bottom: 0;
 }
+
+/* ===== Mobile portrait shape (< 768px wide or < 500px tall) ===== */
+
+#app.shape-mobile {
+  max-width: none;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+#app.shape-mobile > .topbar {
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+/* Hide the desktop column wrappers if they leak in (defensive). */
+#app.shape-mobile > .desktop-left,
+#app.shape-mobile > .desktop-center,
+#app.shape-mobile > .desktop-right {
+  display: none;
+}
+
+/* Tab panel: scrollable region between top bar and tab bar. */
+#app.shape-mobile > .tab-panel {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 8px calc(60px + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Tab bar: pinned to the bottom with iOS safe area. */
+#app.shape-mobile > .tab-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff4d6;
+  border-top: 2px solid #e6d9a8;
+  display: flex;
+  z-index: 50;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#app.shape-mobile > .tab-bar > .tab-button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-right: 1px solid #e6d9a8;
+  padding: 8px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5a3e0a;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 56px;
+  position: relative;
+}
+
+#app.shape-mobile > .tab-bar > .tab-button:last-child {
+  border-right: none;
+}
+
+#app.shape-mobile > .tab-bar > .tab-button.active {
+  background: #fff;
+  color: #56b256;
+}
+
+#app.shape-mobile > .tab-bar > .tab-button .tb-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+#app.shape-mobile > .tab-bar > .tab-button .tb-badge {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  background: #ff5252;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  border-radius: 10px;
+  padding: 0 4px;
+  min-width: 14px;
+  height: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Mobile top bar: hide the Daily / Shop icon-buttons since they're tabs now.
+   Keep Catalog + Settings as overlays. */
+#app.shape-mobile > .topbar [data-action='open-daily'],
+#app.shape-mobile > .topbar [data-action='open-shop'] {
+  display: none;
+}
+
+/* On mobile the legacy bottom inventory layout doesn't apply. */
+#app.shape-mobile .inventory-bar {
+  background: rgba(255, 244, 214, 0.92);
+  border: 1px solid #d6c98a;
+  border-radius: 6px;
+  padding: 6px 8px;
+}
