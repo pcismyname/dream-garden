@@ -7,6 +7,14 @@ window.Garden = window.Garden || {};
     return t.content.firstChild;
   }
 
+  // Mobile shape applies when the viewport is narrow (phone) OR short
+  // (phone in landscape on a short screen). Otherwise desktop shape.
+  function syncViewport() {
+    const narrow = window.innerWidth < 768;
+    const short = window.innerHeight < 500;
+    viewport = (narrow || short) ? "mobile" : "desktop";
+  }
+
   let selectedSeedId = "daisy";
   let selectedPotionId = null;  // when set, next plot click applies this potion
   let catalogOpen = false;
@@ -14,6 +22,8 @@ window.Garden = window.Garden || {};
   let shopOpen = false;
   let dailyOpen = false;
   let dailyRecap = null; // recap computed at boot, shown in the Morning Report
+  let viewport = "desktop";    // "desktop" | "mobile" — recomputed on every renderAll
+  let currentTab = "garden";   // "garden" | "orders" | "shop" | "daily" — mobile only
 
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
@@ -677,8 +687,10 @@ window.Garden = window.Garden || {};
       selectedSeedId = firstUnlocked ? firstUnlocked.id : null;
     }
 
+    syncViewport();
     const app = document.getElementById("app");
     app.innerHTML = "";
+    app.className = viewport === "mobile" ? "shape-mobile" : "shape-desktop";
     app.appendChild(renderTopBar(state));
     const questsEl = renderQuests(state);
     if (questsEl) app.appendChild(questsEl);
@@ -704,6 +716,17 @@ window.Garden = window.Garden || {};
 
   function setupHandlers() {
     const app = document.getElementById("app");
+
+    // Re-render on resize so the shape (desktop vs mobile) tracks the viewport.
+    // Debounce so dragging the window edge does not thrash.
+    let resizeTimer = null;
+    window.addEventListener("resize", () => {
+      if (resizeTimer) clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        if (currentState) renderAll(currentState);
+      }, 150);
+    });
+
     app.addEventListener("click", (ev) => {
       if (!currentState) return;
 
