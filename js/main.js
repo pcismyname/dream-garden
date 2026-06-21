@@ -82,12 +82,25 @@ window.Garden = window.Garden || {};
       }
       Garden.storage.save(state);
     }
-    if (!state.settings) state.settings = { floatingNumbers: true, musicOn: true, sfxOn: true };
+    if (!state.settings) state.settings = { floatingNumbers: true, musicVolume: 100, sfxVolume: 100 };
     if (typeof state.settings.floatingNumbers !== "boolean") {
       state.settings.floatingNumbers = true;
     }
-    if (typeof state.settings.musicOn !== "boolean") state.settings.musicOn = true;
-    if (typeof state.settings.sfxOn !== "boolean") state.settings.sfxOn = true;
+    // Migrate old boolean toggles (musicOn / sfxOn) to integer volumes 0-100.
+    // Idempotent: once the old keys are deleted, steps 1-3 are no-ops on
+    // subsequent boots.
+    if (Object.prototype.hasOwnProperty.call(state.settings, "musicOn")) {
+      state.settings.musicVolume = state.settings.musicOn === false ? 0 : 100;
+      delete state.settings.musicOn;
+    }
+    if (Object.prototype.hasOwnProperty.call(state.settings, "sfxOn")) {
+      state.settings.sfxVolume = state.settings.sfxOn === false ? 0 : 100;
+      delete state.settings.sfxOn;
+    }
+    if (typeof state.settings.musicVolume !== "number") state.settings.musicVolume = 100;
+    if (typeof state.settings.sfxVolume !== "number") state.settings.sfxVolume = 100;
+    state.settings.musicVolume = Math.max(0, Math.min(100, Math.round(state.settings.musicVolume)));
+    state.settings.sfxVolume = Math.max(0, Math.min(100, Math.round(state.settings.sfxVolume)));
     // Audio: preload elements, attach state ref so playSfx reads live settings.
     // Music can't start until a user gesture (browser autoplay policy), so we
     // arm a one-time click listener that fires startMusic() on the first click.

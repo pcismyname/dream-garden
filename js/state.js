@@ -14,7 +14,7 @@ window.Garden = window.Garden || {};
       plantCounts: {},   // { flowerId: int } — counts plantings of NORMAL flowers
       discovered: {},    // { rareFlowerId: true } — rares the player has grown
       quests: [],
-      settings: { floatingNumbers: true, musicOn: true, sfxOn: true },
+      settings: { floatingNumbers: true, musicVolume: 100, sfxVolume: 100 },
       decorations: new Array(Garden.DECORATION_SLOTS).fill(null),
       ownedPots: [Garden.DEFAULT_POT],
       activePotId: Garden.DEFAULT_POT,

@@ -1145,8 +1145,6 @@ window.Garden = window.Garden || {};
       const key = cb.dataset.setting;
       if (!currentState.settings) currentState.settings = {};
       currentState.settings[key] = cb.checked;
-      if (key === "musicOn" && Garden.audio) Garden.audio.setMusicEnabled(cb.checked);
-      if (key === "sfxOn" && Garden.audio) Garden.audio.setSfxEnabled(cb.checked);
       Garden.storage.save(currentState);
     });
   }
