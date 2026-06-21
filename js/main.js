@@ -87,6 +87,18 @@ window.Garden = window.Garden || {};
     }
     if (typeof state.settings.musicOn !== "boolean") state.settings.musicOn = true;
     if (typeof state.settings.sfxOn !== "boolean") state.settings.sfxOn = true;
+    // Audio: preload elements, attach state ref so playSfx reads live settings.
+    // Music can't start until a user gesture (browser autoplay policy), so we
+    // arm a one-time click listener that fires startMusic() on the first click.
+    if (Garden.audio) {
+      Garden.audio.preload();
+      Garden.audio._setState(state);
+      const armMusic = () => {
+        Garden.audio.startMusic();
+        document.removeEventListener("click", armMusic);
+      };
+      document.addEventListener("click", armMusic);
+    }
     if (!Array.isArray(state.decorations) || state.decorations.length !== Garden.DECORATION_SLOTS) {
       state.decorations = new Array(Garden.DECORATION_SLOTS).fill(null);
     }
