@@ -671,6 +671,81 @@ window.Garden = window.Garden || {};
     return wrap;
   }
 
+  function renderDailyPreview(state) {
+    if (!Garden.daily) return null;
+    const claimables = Garden.daily.claimablesCount(state);
+    const wrap = document.createElement("div");
+    wrap.className = "daily-preview";
+    wrap.setAttribute("data-action", "open-daily");
+    const day = (state.daily && state.daily.streakCount) ? (state.daily.streakCount % 7) + 1 : 1;
+    let html = '<div class="dp-line"><b>Day ' + day + '</b> of 7-day streak</div>';
+    if (claimables > 0) {
+      html += '<div class="dp-line">⚡ ' + claimables + ' to claim — tap to open</div>';
+    } else {
+      html += '<div class="dp-line">All caught up today.</div>';
+    }
+    wrap.innerHTML = html;
+    return wrap;
+  }
+
+  function renderDesktopBody(state) {
+    const app = document.getElementById("app");
+
+    // Top bar spans all three columns.
+    app.appendChild(renderTopBar(state));
+
+    // Left column: seeds + inventory (potions).
+    const left = document.createElement("div");
+    left.className = "desktop-left";
+    const seedsLabel = document.createElement("div");
+    seedsLabel.className = "desktop-section-label";
+    seedsLabel.textContent = "Seeds";
+    left.appendChild(seedsLabel);
+    left.appendChild(renderShelf(state));
+    const invEl = renderInventory(state);
+    if (invEl) {
+      const invLabel = document.createElement("div");
+      invLabel.className = "desktop-section-label";
+      invLabel.textContent = "Potions";
+      left.appendChild(invLabel);
+      left.appendChild(invEl);
+    }
+    app.appendChild(left);
+
+    // Center column: garden grid + decoration strip below.
+    const center = document.createElement("div");
+    center.className = "desktop-center";
+    const gardenEl = renderGrid(state);
+    if (selectedPotionId) gardenEl.classList.add("potion-use-mode");
+    center.appendChild(gardenEl);
+    const decoZone = renderDecorationZone(state);
+    if (decoZone) center.appendChild(decoZone);
+    app.appendChild(center);
+
+    // Right column: quests + daily preview.
+    const right = document.createElement("div");
+    right.className = "desktop-right";
+    const questsLabel = document.createElement("div");
+    questsLabel.className = "desktop-section-label";
+    questsLabel.textContent = "Today's orders";
+    right.appendChild(questsLabel);
+    const questsEl = renderQuests(state);
+    if (questsEl) right.appendChild(questsEl);
+    const dailyLabel = document.createElement("div");
+    dailyLabel.className = "desktop-section-label";
+    dailyLabel.textContent = "Daily";
+    right.appendChild(dailyLabel);
+    const dpEl = renderDailyPreview(state);
+    if (dpEl) right.appendChild(dpEl);
+    app.appendChild(right);
+
+    // Overlays (Catalog, Settings, Shop, Daily modal) on top.
+    if (catalogOpen) app.appendChild(renderCatalog(state));
+    if (settingsOpen) app.appendChild(renderSettings(state));
+    if (shopOpen) app.appendChild(renderShop(state));
+    if (dailyOpen) app.appendChild(renderDailyReport(state));
+  }
+
   function renderAll(state) {
     currentState = state;
 
@@ -691,25 +766,27 @@ window.Garden = window.Garden || {};
     const app = document.getElementById("app");
     app.innerHTML = "";
     app.className = viewport === "mobile" ? "shape-mobile" : "shape-desktop";
-    app.appendChild(renderTopBar(state));
-    const questsEl = renderQuests(state);
-    if (questsEl) app.appendChild(questsEl);
-
-    const gardenEl = renderGrid(state);
-    const decoZone = renderDecorationZone(state);
-    if (decoZone) gardenEl.appendChild(decoZone);
-    // Mark the grid so CSS can show a "target-acquired" cursor in potion use mode.
-    if (selectedPotionId) gardenEl.classList.add("potion-use-mode");
-    app.appendChild(gardenEl);
-
-    const inventoryEl = renderInventory(state);
-    if (inventoryEl) app.appendChild(inventoryEl);
-
-    app.appendChild(renderShelf(state));
-    if (catalogOpen) app.appendChild(renderCatalog(state));
-    if (settingsOpen) app.appendChild(renderSettings(state));
-    if (shopOpen) app.appendChild(renderShop(state));
-    if (dailyOpen) app.appendChild(renderDailyReport(state));
+    if (viewport === "desktop") {
+      renderDesktopBody(state);
+    } else {
+      // Mobile body is added in Task 3. Until then, render the legacy single-column
+      // layout so phone viewport still works during the transition.
+      app.appendChild(renderTopBar(state));
+      const questsEl = renderQuests(state);
+      if (questsEl) app.appendChild(questsEl);
+      const gardenEl = renderGrid(state);
+      const decoZone = renderDecorationZone(state);
+      if (decoZone) gardenEl.appendChild(decoZone);
+      if (selectedPotionId) gardenEl.classList.add("potion-use-mode");
+      app.appendChild(gardenEl);
+      const inventoryEl = renderInventory(state);
+      if (inventoryEl) app.appendChild(inventoryEl);
+      app.appendChild(renderShelf(state));
+      if (catalogOpen) app.appendChild(renderCatalog(state));
+      if (settingsOpen) app.appendChild(renderSettings(state));
+      if (shopOpen) app.appendChild(renderShop(state));
+      if (dailyOpen) app.appendChild(renderDailyReport(state));
+    }
   }
 
   let currentState = null;
