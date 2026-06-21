@@ -7,14 +7,6 @@ window.Garden = window.Garden || {};
     return t.content.firstChild;
   }
 
-  // Mobile shape applies when the viewport is narrow (phone) OR short
-  // (phone in landscape on a short screen). Otherwise desktop shape.
-  function syncViewport() {
-    const narrow = window.innerWidth < 768;
-    const short = window.innerHeight < 500;
-    viewport = (narrow || short) ? "mobile" : "desktop";
-  }
-
   let selectedSeedId = "daisy";
   let selectedPotionId = null;  // when set, next plot click applies this potion
   let catalogOpen = false;
@@ -24,6 +16,14 @@ window.Garden = window.Garden || {};
   let dailyRecap = null; // recap computed at boot, shown in the Morning Report
   let viewport = "desktop";    // "desktop" | "mobile" — recomputed on every renderAll
   let currentTab = "garden";   // "garden" | "orders" | "shop" | "daily" — mobile only
+
+  // Mobile shape applies when the viewport is narrow (phone) OR short
+  // (phone in landscape on a short screen). Otherwise desktop shape.
+  function syncViewport() {
+    const narrow = window.innerWidth < 768;
+    const short = window.innerHeight < 500;
+    viewport = (narrow || short) ? "mobile" : "desktop";
+  }
 
   function renderTopBar(state) {
     const xpNeeded = Garden.state.xpForNextLevel(state.level);
