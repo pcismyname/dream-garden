@@ -1140,7 +1140,7 @@ window.Garden = window.Garden || {};
     // Settings toggles (checkbox change events)
     app.addEventListener("change", (ev) => {
       if (!currentState) return;
-      const cb = ev.target.closest("input[data-setting]");
+      const cb = ev.target.closest("input[type='checkbox'][data-setting]");
       if (!cb) return;
       const key = cb.dataset.setting;
       if (!currentState.settings) currentState.settings = {};
