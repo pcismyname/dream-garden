@@ -144,6 +144,7 @@ window.Garden = window.Garden || {};
     Garden.render.renderAll(state);
     lastStageSig = stageSignature(state, Date.now());
     setInterval(tick, 500);
+    if (Garden.cg) Garden.cg.gameplayStart();
   }
 
   if (document.readyState === "loading") {
