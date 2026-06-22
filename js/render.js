@@ -1212,6 +1212,20 @@ window.Garden = window.Garden || {};
     });
   }
 
+  // Tutorial: mark a step in the cycle; flip tutorialDone + drop the
+  // transient cycle object once all three are true.
+  function markTutorialStep(state, step) {
+    if (state.tutorialDone) return;
+    if (!state.tutorialCycle) return;
+    state.tutorialCycle[step] = true;
+    if (state.tutorialCycle.planted &&
+        state.tutorialCycle.watered &&
+        state.tutorialCycle.sunned) {
+      state.tutorialDone = true;
+      delete state.tutorialCycle;
+    }
+  }
+
   function handlePlotClick(idx) {
     const state = currentState;
     const plot = state.plots[idx];
@@ -1249,15 +1263,18 @@ window.Garden = window.Garden || {};
         Garden.state.plant(state, idx, selectedSeedId);
       }
       if (Garden.audio) Garden.audio.playSfx("plant");
+      markTutorialStep(state, "planted");
     } else {
       const stage = Garden.state.getStage(plot, now);
       if (stage === "seed") {
         Garden.state.water(state, idx);
         if (Garden.audio) Garden.audio.playSfx("water");
+        markTutorialStep(state, "watered");
       }
       else if (stage === "watered") {
         Garden.state.sun(state, idx);
         if (Garden.audio) Garden.audio.playSfx("sun");
+        markTutorialStep(state, "sunned");
       }
       else if (stage === "bloomed") {
         // Capture position BEFORE the DOM is torn down by renderAll,
