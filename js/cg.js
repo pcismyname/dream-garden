@@ -58,5 +58,78 @@ window.Garden = window.Garden || {};
     }, () => { /* SDK never appeared — silent fall-through */ });
   }
 
-  Garden.cg = { ready, gameplayStart, isAvailable };
+  let dataReady = false;
+
+  function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  // Resolves true if the SDK initialized AND the Data Module is usable.
+  // Never throws. On timeout (default 3s) or any failure, resolves false.
+  async function init(timeoutMs) {
+    if (typeof timeoutMs !== "number") timeoutMs = 3000;
+    try {
+      if (typeof window.CrazyGames === "undefined") return false;
+      const SDK = window.CrazyGames.SDK;
+      if (!SDK || SDK.environment === "disabled") return false;
+      // Race SDK.init() against a wall-clock timeout. If init() hangs or
+      // rejects, treat as unavailable and let the caller fall back to
+      // localStorage.
+      const ready = await Promise.race([
+        SDK.init().then(() => true).catch(() => false),
+        sleep(timeoutMs).then(() => false),
+      ]);
+      if (!ready) {
+        console.warn("CG SDK init timed out or rejected; falling back to localStorage");
+        return false;
+      }
+      // Probe the Data Module to detect dataModuleDisabled before any real read.
+      try {
+        SDK.data.getItem("__probe");
+      } catch (e) {
+        console.warn("CG Data Module disabled — check portal Progress Save setting", e);
+        return false;
+      }
+      dataReady = true;
+      return true;
+    } catch (e) {
+      console.warn("CG init unexpected failure; falling back to localStorage", e);
+      return false;
+    }
+  }
+
+  function dataAvailable() {
+    return dataReady;
+  }
+
+  function getItem(key) {
+    if (!dataReady) return null;
+    try {
+      return window.CrazyGames.SDK.data.getItem(key);
+    } catch (e) {
+      console.warn("CG data.getItem failed", e);
+      return null;
+    }
+  }
+
+  function setItem(key, value) {
+    if (!dataReady) return;
+    try {
+      window.CrazyGames.SDK.data.setItem(key, value);
+    } catch (e) {
+      console.warn("CG data.setItem failed; writing to localStorage as parachute", e);
+      try { localStorage.setItem(key, value); } catch (_) {}
+    }
+  }
+
+  function removeItem(key) {
+    if (!dataReady) return;
+    try {
+      window.CrazyGames.SDK.data.removeItem(key);
+    } catch (e) {
+      console.warn("CG data.removeItem failed", e);
+    }
+  }
+
+  Garden.cg = { ready, gameplayStart, isAvailable, init, dataAvailable, getItem, setItem, removeItem };
 })(window.Garden);
