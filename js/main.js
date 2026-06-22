@@ -70,8 +70,9 @@ window.Garden = window.Garden || {};
     });
   }
 
-  function start() {
-    state = Garden.storage.load() || Garden.state.createInitialState();
+  async function start() {
+    await Garden.cg.init(3000);
+    state = (await Garden.storage.load()) || Garden.state.createInitialState();
     // Backward-compat for saves from earlier versions.
     if (!state.plantCounts) state.plantCounts = {};
     if (!state.discovered) state.discovered = {};
