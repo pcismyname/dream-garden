@@ -20,7 +20,15 @@ window.Garden = window.Garden || {};
       activePotId: Garden.DEFAULT_POT,
       inventory: {},
       daily: Garden.daily ? Garden.daily.defaultDaily() : null,
+      tutorialDone: false,
+      tutorialCycle: { planted: false, watered: false, sunned: false },
     };
+    // Tutorial pre-spawn: place a bloomed daisy on the center plot so a
+    // brand-new player has a satisfying first action queued up.
+    const daisy = Garden.flowerById("daisy");
+    if (daisy) {
+      s.plots[4] = { flowerId: "daisy", bloomAt: Date.now() };
+    }
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
   }

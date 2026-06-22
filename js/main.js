@@ -101,6 +101,9 @@ window.Garden = window.Garden || {};
     if (typeof state.settings.sfxVolume !== "number") state.settings.sfxVolume = 100;
     state.settings.musicVolume = Math.max(0, Math.min(100, Math.round(state.settings.musicVolume)));
     state.settings.sfxVolume = Math.max(0, Math.min(100, Math.round(state.settings.sfxVolume)));
+    // Tutorial migration: any save predating the tutorial system is treated
+    // as a returning player and skips onboarding.
+    if (typeof state.tutorialDone !== "boolean") state.tutorialDone = true;
     // Audio: preload elements, attach state ref so playSfx reads live settings.
     // Music can't start until a user gesture (browser autoplay policy), so we
     // arm a one-time click listener that fires startMusic() on the first click.
