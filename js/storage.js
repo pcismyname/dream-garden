@@ -32,12 +32,18 @@ window.Garden = window.Garden || {};
     if (Garden.cg && Garden.cg.dataAvailable()) {
       let raw = Garden.cg.getItem(STORAGE_KEY);
       if (raw === null) {
-        // One-shot migration: lift any existing localStorage save into the
-        // Data Module on first init. Only fires when the cloud is empty,
-        // so it never overwrites a real cloud save.
+        // Lift-on-empty migration: when the cloud bucket is empty, copy any
+        // valid localStorage save up to the Data Module. Fires every boot
+        // until the cloud has data — idempotent because save() only writes
+        // to localStorage off-CG, so the lifted payload never drifts. We
+        // validate via parseSave first so corrupt or wrong-version local
+        // saves never get pinned to the cloud, and we drop the localStorage
+        // shadow after a successful uplift to avoid stale-resurface across
+        // signed-in → guest transitions on CG.
         const fallback = localStorage.getItem(STORAGE_KEY);
-        if (fallback) {
+        if (fallback && parseSave(fallback)) {
           Garden.cg.setItem(STORAGE_KEY, fallback);
+          localStorage.removeItem(STORAGE_KEY);
           raw = fallback;
         }
       }
