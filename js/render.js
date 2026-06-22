@@ -148,6 +148,40 @@ window.Garden = window.Garden || {};
     return overlay;
   }
 
+  // Tutorial: pure function returning the current pulse target + label text,
+  // or null when no hint applies. First-match-wins by lowest plot index for
+  // stable behavior when the player has multiple plots in the same state.
+  function computeTutorialHint(state, now) {
+    if (state.tutorialDone) return null;
+    const cycle = state.tutorialCycle;
+    if (!cycle) return null;
+
+    if (!cycle.planted) {
+      const bloomed = state.plots.findIndex(
+        p => p && Garden.state.getStage(p, now) === "bloomed"
+      );
+      if (bloomed !== -1) return { targetIdx: bloomed, text: "Click to harvest!" };
+      const empty = state.plots.findIndex(p => p === null);
+      if (empty !== -1) return { targetIdx: empty, text: "Click to plant" };
+      return null;
+    }
+    if (!cycle.watered) {
+      const seed = state.plots.findIndex(
+        p => p && Garden.state.getStage(p, now) === "seed"
+      );
+      if (seed !== -1) return { targetIdx: seed, text: "Click to water" };
+      return null;
+    }
+    if (!cycle.sunned) {
+      const watered = state.plots.findIndex(
+        p => p && Garden.state.getStage(p, now) === "watered"
+      );
+      if (watered !== -1) return { targetIdx: watered, text: "Click for sun" };
+      return null;
+    }
+    return null;
+  }
+
   function renderGrid(state) {
     const now = Date.now();
     const wrap = el(`<div class="garden"><div class="grid" style="grid-template-columns:repeat(${state.gridSize}, 72px); grid-template-rows:repeat(${state.gridSize}, 72px);"></div></div>`);
@@ -209,6 +243,18 @@ window.Garden = window.Garden || {};
 
       grid.appendChild(plotEl);
     });
+
+    // Tutorial pulse + hint label. Renders only while tutorialDone === false.
+    const hint = computeTutorialHint(state, now);
+    if (hint) {
+      const plotEls = grid.querySelectorAll(".plot");
+      const targetEl = plotEls[hint.targetIdx];
+      if (targetEl) targetEl.classList.add("tutorial-target");
+      const label = document.createElement("div");
+      label.className = "tutorial-hint";
+      label.textContent = hint.text;
+      wrap.appendChild(label);
+    }
 
     return wrap;
   }

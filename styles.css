@@ -1223,3 +1223,21 @@ body {
   font-weight: 600;
   margin-left: 6px;
 }
+
+/* Tutorial onboarding — pulse on the target plot + hint label below the garden. */
+@keyframes tutorial-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(126, 231, 135, 0.55); }
+  50%      { box-shadow: 0 0 0 10px rgba(126, 231, 135, 0); }
+}
+.plot.tutorial-target {
+  animation: tutorial-pulse 1.4s ease-in-out infinite;
+  border-radius: 8px; /* harmless if the plot already has a radius; needed for clean shadow on plots that don't */
+}
+.tutorial-hint {
+  margin-top: 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #2f7a3d;
+  font-weight: 500;
+  opacity: 0.9;
+}
