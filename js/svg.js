@@ -31,18 +31,150 @@ window.Garden = window.Garden || {};
       </svg>`;
   }
 
-  // Full bloom: 5-petal rosette, color per flower
-  function bloomedSvg(petalColor, centerColor) {
+  // ========================================================================
+  // Full bloom art — one hand-authored silhouette per species so every
+  // flower is recognizable at plot size. Shape functions take (petal,
+  // center) colors and return inner SVG content for an 80x80 canvas with
+  // the flower head around (40, 28) and the stem reaching y=68. Shading
+  // uses black/white overlays with opacity so rare recolors stay correct.
+  // ========================================================================
+
+  function svgWrap(content, viewBox) {
+    return `<svg viewBox="${viewBox}" width="100%" height="100%">${content}</svg>`;
+  }
+
+  const OUTLINE = `stroke="rgba(0,0,0,0.14)" stroke-width="0.7"`;
+
+  // Shared stem + two leaves, used by most single-head species.
+  const STEM_LEAVES = `
+    <path d="M40 42 Q39 55 40 68" stroke="#3b8e3b" stroke-width="3" fill="none" stroke-linecap="round"/>
+    <path d="M40 56 Q31 49 26 53 Q30 60 40 59 Z" fill="#56b256" ${OUTLINE}/>
+    <path d="M40 61 Q49 55 54 59 Q50 66 40 64 Z" fill="#4aa54a" ${OUTLINE}/>`;
+
+  // Pointed petal anchored at pivot (px, py), tip length len, half-width w.
+  function pointedPetal(px, py, len, w, angle, fill, opacity) {
+    return `<path d="M${px} ${py} Q${px - w} ${py - len * 0.55} ${px} ${py - len} Q${px + w} ${py - len * 0.55} ${px} ${py} Z"
+      fill="${fill}" ${OUTLINE} ${opacity ? `opacity="${opacity}"` : ""}
+      transform="rotate(${angle} ${px} ${py})"/>`;
+  }
+
+  function daisyBloom(p, c) {
+    let petals = "";
+    for (let i = 0; i < 10; i++) {
+      petals += `<ellipse cx="40" cy="19.5" rx="4.2" ry="11" fill="${p}" ${OUTLINE} transform="rotate(${i * 36} 40 30)"/>`;
+    }
+    return `${STEM_LEAVES}${petals}
+      <circle cx="40" cy="30" r="7.5" fill="${c}"/>
+      <circle cx="37.5" cy="27.5" r="2.6" fill="#fff" opacity="0.4"/>`;
+  }
+
+  function tulipBloom(p, c) {
     return `
-      <svg viewBox="0 0 80 80" width="100%" height="100%">
-        <ellipse cx="40" cy="35" rx="9" ry="9" fill="${petalColor}"/>
-        <ellipse cx="30" cy="32" rx="8" ry="8" fill="${petalColor}"/>
-        <ellipse cx="50" cy="32" rx="8" ry="8" fill="${petalColor}"/>
-        <ellipse cx="34" cy="44" rx="8" ry="8" fill="${petalColor}"/>
-        <ellipse cx="46" cy="44" rx="8" ry="8" fill="${petalColor}"/>
-        <circle cx="40" cy="38" r="5" fill="${centerColor}"/>
-        <rect x="37" y="46" width="6" height="22" fill="#3b8e3b"/>
-      </svg>`;
+      <path d="M40 40 L40 68" stroke="#3b8e3b" stroke-width="3" stroke-linecap="round"/>
+      <path d="M40 60 Q29 53 26 41 Q36 47 40 55 Z" fill="#56b256" ${OUTLINE}/>
+      <path d="M40 63 Q51 56 54 44 Q44 50 40 58 Z" fill="#4aa54a" ${OUTLINE}/>
+      <path d="M29 23 Q28 40 40 41 Q52 40 51 23 L47 14 Q44 20 40 20 Q36 20 33 14 Z" fill="${p}" ${OUTLINE}/>
+      <path d="M36 15 Q40 24 44 15 Q42 11 40 11 Q38 11 36 15 Z" fill="${p}"/>
+      <path d="M36 15 Q40 24 44 15" stroke="${c}" stroke-width="1" fill="none" opacity="0.6"/>
+      <path d="M32 22 Q31 34 38 39" stroke="#fff" stroke-width="1.6" fill="none" opacity="0.35" stroke-linecap="round"/>
+      <path d="M47 16 Q50 28 44 38" stroke="rgba(0,0,0,0.12)" stroke-width="1.4" fill="none" stroke-linecap="round"/>`;
+  }
+
+  function roseBloom(p, c) {
+    let outer = "";
+    for (let i = 0; i < 6; i++) {
+      const a = i * 60 + 30;
+      outer += `<circle cx="40" cy="20" r="8" fill="${p}" ${OUTLINE} transform="rotate(${a} 40 30)"/>`;
+    }
+    return `${STEM_LEAVES}
+      <path d="M36 50 l-3 -2 M43 57 l3 -2" stroke="#2d6b2d" stroke-width="1.4" stroke-linecap="round"/>
+      ${outer}
+      <circle cx="40" cy="30" r="9.5" fill="${p}"/>
+      <circle cx="40" cy="30" r="9.5" fill="rgba(0,0,0,0.07)"/>
+      <path d="M40 30 q5 -5 1 -8.5 M40 30 q-5.5 1.5 -2.5 6.5 M40 30 q3 3.5 6.5 0.5"
+        stroke="${c}" stroke-width="1.3" fill="none" opacity="0.55" stroke-linecap="round"/>
+      <circle cx="36" cy="25" r="2.4" fill="#fff" opacity="0.3"/>`;
+  }
+
+  function jasmineBloom(p, c) {
+    function blossom(x, y, r) {
+      let petals = "";
+      for (let i = 0; i < 5; i++) {
+        petals += `<ellipse cx="${x}" cy="${y - r}" rx="${r * 0.62}" ry="${r}" fill="${p}" ${OUTLINE} transform="rotate(${i * 72 + 15} ${x} ${y})"/>`;
+      }
+      return `${petals}<circle cx="${x}" cy="${y}" r="${r * 0.5}" fill="${c}"/>`;
+    }
+    return `
+      <path d="M40 68 Q39 50 33 32 M40 68 Q42 48 48 28 M40 68 Q41 52 43 42"
+        stroke="#3b8e3b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M40 58 Q32 53 28 56 Q32 62 40 60 Z" fill="#56b256" ${OUTLINE}/>
+      <path d="M42 50 Q50 46 53 49 Q49 55 42 52 Z" fill="#4aa54a" ${OUTLINE}/>
+      ${blossom(32, 27, 6)}
+      ${blossom(49, 22, 7)}
+      ${blossom(43, 38, 5.5)}`;
+  }
+
+  function sunflowerBloom(p, c) {
+    let petals = "";
+    for (let i = 0; i < 12; i++) {
+      petals += `<ellipse cx="40" cy="16" rx="4.6" ry="9.5" fill="${p}" ${OUTLINE} transform="rotate(${i * 30} 40 28)"/>`;
+    }
+    return `
+      <path d="M40 42 Q39 55 40 68" stroke="#3b8e3b" stroke-width="4" fill="none" stroke-linecap="round"/>
+      <path d="M40 55 Q29 47 24 52 Q29 61 40 58 Z" fill="#56b256" ${OUTLINE}/>
+      <path d="M40 60 Q51 53 56 58 Q51 66 40 63 Z" fill="#4aa54a" ${OUTLINE}/>
+      ${petals}
+      <circle cx="40" cy="28" r="12" fill="${c}"/>
+      <circle cx="40" cy="28" r="12" fill="none" stroke="rgba(0,0,0,0.2)" stroke-width="1"/>
+      <circle cx="36" cy="25" r="1.3" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="43" cy="24" r="1.3" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="40" cy="30" r="1.3" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="35" cy="31" r="1.3" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="44" cy="31" r="1.3" fill="rgba(0,0,0,0.3)"/>
+      <circle cx="40" cy="24" r="1.3" fill="rgba(0,0,0,0.3)"/>`;
+  }
+
+  function calceolariaBloom(p, c) {
+    function pouch(x, y, r) {
+      return `
+        <ellipse cx="${x}" cy="${y}" rx="${r}" ry="${r * 1.15}" fill="${p}" ${OUTLINE}/>
+        <ellipse cx="${x}" cy="${y - r * 0.85}" rx="${r * 0.65}" ry="${r * 0.35}" fill="${p}"/>
+        <ellipse cx="${x}" cy="${y - r * 0.85}" rx="${r * 0.65}" ry="${r * 0.35}" fill="rgba(0,0,0,0.15)"/>
+        <circle cx="${x - r * 0.3}" cy="${y + r * 0.2}" r="1.1" fill="${c}"/>
+        <circle cx="${x + r * 0.35}" cy="${y}" r="1.1" fill="${c}"/>
+        <circle cx="${x}" cy="${y + r * 0.55}" r="1.1" fill="${c}"/>
+        <ellipse cx="${x - r * 0.4}" cy="${y - r * 0.35}" rx="2" ry="2.8" fill="#fff" opacity="0.3"/>`;
+    }
+    return `
+      <path d="M40 68 Q38 52 31 34 M40 68 Q43 50 49 30 M40 68 Q40 54 40 44"
+        stroke="#3b8e3b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M40 59 Q31 53 27 56 Q31 63 40 61 Z" fill="#56b256" ${OUTLINE}/>
+      ${pouch(30, 27, 7)}
+      ${pouch(49, 23, 8)}
+      ${pouch(40, 38, 6.5)}`;
+  }
+
+  // Species id → bloom shape function. Rares map to their parent's shape
+  // (same species, rare color) via SHAPE_KEY.
+  const SHAPES = {
+    daisy: daisyBloom,
+    tulip: tulipBloom,
+    rose: roseBloom,
+    jasmine: jasmineBloom,
+    sunflower: sunflowerBloom,
+    calceolaria: calceolariaBloom,
+  };
+
+  function shapeKeyFor(flowerId) {
+    if (SHAPES[flowerId]) return flowerId;
+    const rare = (Garden.RARE_FLOWERS || []).find(r => r.id === flowerId);
+    if (rare && SHAPES[rare.parentId]) return rare.parentId;
+    return "daisy";
+  }
+
+  function bloomContent(flowerId) {
+    const c = COLORS[flowerId] || COLORS.daisy;
+    return SHAPES[shapeKeyFor(flowerId)](c.petal, c.center);
   }
 
   // Wilted: a small dried plant clearly drooping inside the pot.
@@ -86,26 +218,14 @@ window.Garden = window.Garden || {};
     if (stage === "wilted") return WILTED_SVG;
     const c = COLORS[flowerId] || COLORS.daisy;
     if (stage === "growing") return growingSvg(c.petal);
-    if (stage === "bloomed") return bloomedSvg(c.petal, c.center);
+    if (stage === "bloomed") return svgWrap(bloomContent(flowerId), "0 0 80 80");
     return "";
   }
 
-  // Tiny icon for the seed shelf and catalog cards.
-  // Thin warm-brown stroke so light-petaled flowers (Daisy, Jasmine) are visible
-  // against light card backgrounds.
+  // Tiny icon for the seed shelf and catalog cards: the species bloom art
+  // cropped to the flower head so each species chip is distinct.
   function flowerIcon(flowerId) {
-    const c = COLORS[flowerId] || COLORS.daisy;
-    return `
-      <svg viewBox="0 0 40 40" width="100%" height="100%">
-        <g stroke="#6b5a3a" stroke-width="0.8">
-          <ellipse cx="20" cy="18" rx="5" ry="5" fill="${c.petal}"/>
-          <ellipse cx="14" cy="16" rx="4" ry="4" fill="${c.petal}"/>
-          <ellipse cx="26" cy="16" rx="4" ry="4" fill="${c.petal}"/>
-          <ellipse cx="16" cy="24" rx="4" ry="4" fill="${c.petal}"/>
-          <ellipse cx="24" cy="24" rx="4" ry="4" fill="${c.petal}"/>
-          <circle cx="20" cy="20" r="3" fill="${c.center}"/>
-        </g>
-      </svg>`;
+    return svgWrap(bloomContent(flowerId), "12 2 56 56");
   }
 
   // Question-mark silhouette for undiscovered rare flowers in the catalog.
