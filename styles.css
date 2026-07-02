@@ -499,6 +499,20 @@ body {
   background: #efe7c4;
   border-style: dashed;
 }
+.achieve-card .achieve-icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+}
+.achieve-card.achieve-unlocked {
+  border-color: #d4a017;
+  background: linear-gradient(135deg, #fff 60%, #fff3c4);
+}
+.achieve-card.locked-card .achieve-icon { opacity: 0.55; }
 
 .catalog-icon {
   width: 40px;
@@ -802,6 +816,10 @@ body {
 .toast-rare {
   border-color: #b27acc;
   background: linear-gradient(135deg, #f8ecff, #fff4d6);
+}
+.toast-achieve {
+  border-color: #d4a017;
+  background: linear-gradient(135deg, #fff3c4, #fff4d6);
 }
 
 @keyframes toast-in {

@@ -36,6 +36,19 @@ window.Garden = window.Garden || {};
     });
     if (revealed) Garden.storage.save(state);
 
+    // Achievement sweep: one integration point catches every unlock path
+    // (harvest, purchase, expansion, level, discovery) within 500ms.
+    if (Garden.achievements) {
+      const newly = Garden.achievements.sweep(state);
+      if (newly.length > 0) {
+        newly.forEach(a => {
+          if (Garden.fx) Garden.fx.toast("🏆 " + a.name + " — " + a.desc, { variant: "achieve" });
+        });
+        if (Garden.audio) Garden.audio.playSfx("quest-complete");
+        Garden.storage.save(state);
+      }
+    }
+
     const sig = stageSignature(state, now);
 
     if (sig !== lastStageSig) {
@@ -143,6 +156,18 @@ window.Garden = window.Garden || {};
     }
     if (!state.inventory || typeof state.inventory !== "object") {
       state.inventory = {};
+    }
+    // Achievements migration: older saves get empty counters. Threshold
+    // achievements the player already satisfies (level, grid, discoveries)
+    // unlock on the first tick sweep — a small welcome-back moment.
+    if (!state.lifetime || typeof state.lifetime !== "object") {
+      state.lifetime = Garden.achievements.defaultLifetime();
+    }
+    if (!state.lifetime.species || typeof state.lifetime.species !== "object") {
+      state.lifetime.species = {};
+    }
+    if (!state.achievements || typeof state.achievements !== "object") {
+      state.achievements = {};
     }
     // Daily systems: recap must be computed BEFORE the first save of this
     // session overwrites daily.lastSeenAt.

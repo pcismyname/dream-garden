@@ -22,6 +22,8 @@ window.Garden = window.Garden || {};
       daily: Garden.daily ? Garden.daily.defaultDaily() : null,
       tutorialDone: false,
       tutorialCycle: { planted: false, watered: false, sunned: false },
+      lifetime: Garden.achievements ? Garden.achievements.defaultLifetime() : null,
+      achievements: {},
     };
     // Tutorial pre-spawn: place a bloomed daisy on the center plot so a
     // brand-new player has a satisfying first action queued up. The extended
@@ -33,6 +35,18 @@ window.Garden = window.Garden || {};
     }
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
+  }
+
+  // Lifetime counters feed js/achievements.js. Defensive shape repair here
+  // so pre-achievements saves work without a storage VERSION bump.
+  function ensureLifetime(state) {
+    if (!state.lifetime || typeof state.lifetime !== "object") {
+      state.lifetime = Garden.achievements
+        ? Garden.achievements.defaultLifetime()
+        : { harvests: 0, coinsEarned: 0, raresHarvested: 0, potionsUsed: 0, questsCompleted: 0, species: {} };
+    }
+    if (!state.lifetime.species) state.lifetime.species = {};
+    return state.lifetime;
   }
 
   function buyPotion(state, potionId) {
@@ -62,6 +76,7 @@ window.Garden = window.Garden || {};
       // (that would make it bloomed but with arbitrary bloomAt history).
       plot.bloomAt = Math.max(now, plot.bloomAt - Garden.SPEED_POTION_MS);
       state.inventory[potionId] = Math.max(0, state.inventory[potionId] - 1);
+      ensureLifetime(state).potionsUsed += 1;
       return { ok: true };
     }
 
@@ -70,6 +85,7 @@ window.Garden = window.Garden || {};
       // Restore to freshly bloomed: full wilt window remaining.
       plot.bloomAt = now;
       state.inventory[potionId] = Math.max(0, state.inventory[potionId] - 1);
+      ensureLifetime(state).potionsUsed += 1;
       return { ok: true };
     }
 
@@ -243,6 +259,12 @@ window.Garden = window.Garden || {};
     state.xp += xpGained;
     state.plots[plotIdx] = null;
 
+    const lt = ensureLifetime(state);
+    lt.harvests += 1;
+    lt.coinsEarned += coinsGained;
+    if (flower.rare) lt.raresHarvested += 1;
+    lt.species[flower.parentId || flower.id] = true;
+
     // Daily quest progress: harvesting a rare counts toward its parent's quest.
     // Quests do NOT regenerate on completion — they refresh once per day (js/daily.js).
     if (!state.quests) state.quests = [];
@@ -260,6 +282,8 @@ window.Garden = window.Garden || {};
         const xpBonus = Math.round((10 + q.target * Math.floor(qFlower.sellPrice / 10)) * 1.5);
         state.coins += coinBonus;
         state.xp += xpBonus;
+        lt.coinsEarned += coinBonus;
+        lt.questsCompleted += 1;
         questCompleted = { flowerId: q.flowerId, target: q.target, coinBonus, xpBonus };
 
         // All-3 chest: once per day, when the third quest completes.
@@ -272,6 +296,7 @@ window.Garden = window.Garden || {};
           if (!state.inventory) state.inventory = {};
           state.inventory[chestPotionId] = (state.inventory[chestPotionId] || 0) + 1;
           state.coins += chestCoins;
+          lt.coinsEarned += chestCoins;
           chestAwarded = { coins: chestCoins, potionId: chestPotionId };
         }
       }

@@ -128,6 +128,10 @@ window.Garden = window.Garden || {};
             <h3 class="catalog-section-title">Rare Variants</h3>
             <div class="catalog-grid" data-section="rare"></div>
           </section>
+          <section class="catalog-section">
+            <h3 class="catalog-section-title" data-achieve-title>Achievements</h3>
+            <div class="catalog-grid" data-section="achievements"></div>
+          </section>
         </div>
       </div>
     `);
@@ -144,6 +148,27 @@ window.Garden = window.Garden || {};
       const progress = (counts[rare.parentId] || 0) % rare.interval;
       rareGrid.appendChild(renderCatalogCard(fullRare, !isDiscovered, progress, rare.interval));
     });
+
+    if (Garden.achievements) {
+      const achGrid = overlay.querySelector("[data-section='achievements']");
+      const achMap = state.achievements || {};
+      const defs = Garden.achievements.ACHIEVEMENTS;
+      const title = overlay.querySelector("[data-achieve-title]");
+      title.textContent = `Achievements (${Garden.achievements.unlockedCount(state)}/${defs.length})`;
+      defs.forEach(a => {
+        const unlocked = !!achMap[a.id];
+        const card = el(`
+          <div class="catalog-card achieve-card ${unlocked ? "achieve-unlocked" : "locked-card"}">
+            <div class="achieve-icon">${unlocked ? "🏆" : "🔒"}</div>
+            <div class="catalog-info">
+              <div class="catalog-name">${a.name}</div>
+              <div class="catalog-hint">${a.desc}</div>
+            </div>
+          </div>
+        `);
+        achGrid.appendChild(card);
+      });
+    }
 
     return overlay;
   }
