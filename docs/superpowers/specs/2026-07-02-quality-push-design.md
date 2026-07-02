@@ -121,6 +121,29 @@ variant) + save. UI: the Catalog modal gains a two-tab header — **Flowers |
 Achievements** — reusing existing card grid styles; locked achievements show
 name + hint, unlocked show gold border.
 
+## Addendum (same day) — Catalog/UI overhaul + Mythical tier
+
+User feedback after the first pass: the Catalog modal was too dense (three
+sections, each with its own scrollbar) and wanted more flower variants
+including a "mythical" tier.
+
+- **Tabbed Collection Book.** The Catalog modal becomes three tabs —
+  Flowers | Variants | Achievements — over ONE scrollable `.modal-body`.
+  Per-section `overflow-y` is gone (the Shop modal got the same single-body
+  scroll fix). Cards got bigger icons (48px), wider grid columns, tier
+  badges (RARE purple, MYTHIC gold), and section headers show collection
+  counts ("2/12 found").
+- **Mythical flowers.** `Garden.MYTHIC_FLOWERS`: 12 variants (one per
+  species), spawned by a pure 2% jackpot roll at plant time (checked before
+  the deterministic rare interval; the rare fires when the roll misses).
+  Sell for 8× parent. Mystery seeds have a 5% mythic path. Art = parent
+  silhouette + glow halo + sparkles (`glow` color in the COLORS table
+  triggers the aura). Spawn/harvest/mystery-reveal all fire gold "MYTHICAL"
+  toasts + rare-sparkle sfx.
+- **Achievements** grew to 21: tier-aware predicates (rare goals filter
+  RARE_FLOWERS so mythic discoveries can't satisfy them) plus
+  "Once in a Lifetime" (first mythic) and "Myth Hunter" (3 mythics).
+
 ## Verification
 
 - `node --check` every touched JS file.

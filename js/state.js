@@ -180,13 +180,20 @@ window.Garden = window.Garden || {};
     if (!state.plantCounts) state.plantCounts = {};
     state.plantCounts[flowerId] = (state.plantCounts[flowerId] || 0) + 1;
 
-    // Every Nth planting of a flower with a rare cousin spawns the rare instead.
+    // Mythic jackpot roll first (rarer, more special), else every Nth
+    // planting of a flower with a rare cousin spawns the rare instead.
     let actualFlowerId = flowerId;
     let rareSpawned = false;
+    let mythicSpawned = false;
+    const mythic = Garden.mythicForParent(flowerId);
     const rare = Garden.rareForParent(flowerId);
-    if (rare && state.plantCounts[flowerId] % rare.interval === 0) {
+    if (!state.discovered) state.discovered = {};
+    if (mythic && Math.random() < mythic.chance) {
+      actualFlowerId = mythic.id;
+      state.discovered[mythic.id] = true;
+      mythicSpawned = true;
+    } else if (rare && state.plantCounts[flowerId] % rare.interval === 0) {
       actualFlowerId = rare.id;
-      if (!state.discovered) state.discovered = {};
       state.discovered[rare.id] = true;
       rareSpawned = true;
     }
@@ -197,7 +204,7 @@ window.Garden = window.Garden || {};
       plantedAt: Date.now(),
       bloomAt: null,
     };
-    return { ok: true, rareSpawned };
+    return { ok: true, rareSpawned, mythicSpawned };
   }
 
   // Plant a mystery seed: the real flower is resolved NOW but hidden ("?")
@@ -210,8 +217,10 @@ window.Garden = window.Garden || {};
     const unlocked = Garden.FLOWERS.filter(f => state.level >= f.levelReq);
     const base = unlocked[Math.floor(Math.random() * unlocked.length)];
     let flowerId = base.id;
+    const mythic = Garden.mythicForParent(base.id);
     const rare = Garden.rareForParent(base.id);
-    if (rare && Math.random() < 0.25) flowerId = rare.id;
+    if (mythic && Math.random() < 0.05) flowerId = mythic.id;
+    else if (rare && Math.random() < 0.25) flowerId = rare.id;
 
     state.inventory.mysterySeed -= 1;
     state.plots[plotIdx] = {
@@ -315,6 +324,7 @@ window.Garden = window.Garden || {};
       leveledUp,
       newLevel: state.level,
       rare: !!flower.rare,
+      mythic: !!flower.mythic,
       questCompleted,
       chestAwarded,
     };

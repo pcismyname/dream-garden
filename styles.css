@@ -443,8 +443,28 @@ body {
   justify-content: space-between;
   padding: 16px 20px;
   border-bottom: 2px solid #e6d9a8;
+  background: linear-gradient(180deg, #fffbea, #fff4d6);
+  border-radius: 10px 10px 0 0;
 }
 .modal-header h2 { margin: 0; color: #5a3e0a; font-size: 18px; }
+
+/* Single scroll container for modal content — sections stack inside it
+   instead of each section scrolling independently. */
+.modal-body {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+.modal-section { padding: 16px 20px; }
+.modal-section + .modal-section { border-top: 1px solid #e6d9a8; }
+
+.section-count {
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 500;
+  color: #b8934a;
+  margin-left: 6px;
+}
 
 .modal-close {
   background: transparent;
@@ -459,11 +479,32 @@ body {
 
 .catalog-modal { overflow: hidden; }
 
-.catalog-section {
-  padding: 16px 20px;
-  overflow-y: auto;
+.catalog-tabs {
+  display: flex;
+  gap: 6px;
+  padding: 12px 16px 0;
+  border-bottom: 2px solid #e6d9a8;
+  background: #f7eecb;
 }
-.catalog-section + .catalog-section { border-top: 1px solid #e6d9a8; }
+.catalog-tab {
+  padding: 10px 18px;
+  border: 2px solid #e6d9a8;
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  background: #efe4bd;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  color: #8a6e3a;
+  margin-bottom: -2px;
+  transition: background 0.12s, color 0.12s;
+}
+.catalog-tab:hover { background: #f7eecb; }
+.catalog-tab.active {
+  background: #fff4d6;
+  color: #3a2e0a;
+  border-bottom: 2px solid #fff4d6;
+}
 
 .catalog-section-title {
   margin: 0 0 12px 0;
@@ -475,18 +516,18 @@ body {
 
 .catalog-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
 }
 
 .catalog-card {
   background: #fff;
   border: 1px solid #d6c98a;
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 12px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   transition: transform 0.12s, box-shadow 0.12s;
 }
 .catalog-card:hover { transform: translateY(-2px); box-shadow: 0 4px 10px rgba(122, 94, 42, 0.2); }
@@ -495,10 +536,16 @@ body {
   border-color: #b27acc;
   background: linear-gradient(135deg, #fff 70%, #f3e8ff);
 }
+.catalog-card.mythic-card {
+  border-color: #e8a020;
+  background: linear-gradient(135deg, #fff 55%, #fff0d0 80%, #ffe4ef);
+  box-shadow: 0 0 8px rgba(232, 160, 32, 0.25);
+}
 .catalog-card.locked-card {
   background: #efe7c4;
   border-style: dashed;
 }
+.catalog-card.mythic-locked { border-color: #d9b96a; }
 .achieve-card .achieve-icon {
   width: 40px;
   height: 40px;
@@ -515,13 +562,13 @@ body {
 .achieve-card.locked-card .achieve-icon { opacity: 0.55; }
 
 .catalog-icon {
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
 }
 
 .catalog-info { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.catalog-name { font-weight: bold; font-size: 13px; color: #3a2e0a; }
+.catalog-name { font-weight: bold; font-size: 14px; color: #3a2e0a; }
 .catalog-stats {
   font-size: 11px;
   color: #7a5e2a;
@@ -542,6 +589,9 @@ body {
   border-radius: 4px;
   letter-spacing: 0.05em;
   vertical-align: middle;
+}
+.rare-tag.mythic-tag {
+  background: linear-gradient(90deg, #e8a020, #d4506a);
 }
 
 /* ===== Settings modal ===== */
@@ -638,7 +688,6 @@ body {
 
 .shop-section {
   padding: 16px 20px;
-  overflow-y: auto;
 }
 .shop-section + .shop-section { border-top: 1px solid #e6d9a8; }
 
@@ -820,6 +869,10 @@ body {
 .toast-achieve {
   border-color: #d4a017;
   background: linear-gradient(135deg, #fff3c4, #fff4d6);
+}
+.toast-mythic {
+  border-color: #e8a020;
+  background: linear-gradient(135deg, #fff3c4, #ffe4ef);
 }
 
 @keyframes toast-in {

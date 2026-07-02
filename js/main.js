@@ -23,11 +23,16 @@ window.Garden = window.Garden || {};
       delete plot.mystery;
       revealed = true;
       const flower = Garden.flowerById(plot.flowerId);
-      if (flower && flower.rare) {
+      if (flower && (flower.rare || flower.mythic)) {
         if (Garden.audio) Garden.audio.playSfx("rare-sparkle");
         if (!state.discovered) state.discovered = {};
         if (!state.discovered[flower.id] && Garden.fx) {
-          Garden.fx.toast("Mystery seed revealed: " + flower.name + "! (RARE)", { variant: "rare" });
+          Garden.fx.toast(
+            flower.mythic
+              ? "🌟 Mystery seed revealed: " + flower.name + "! (MYTHICAL)"
+              : "Mystery seed revealed: " + flower.name + "! (RARE)",
+            { variant: flower.mythic ? "mythic" : "rare" }
+          );
         }
         state.discovered[flower.id] = true;
       } else if (flower && Garden.fx) {

@@ -32,6 +32,23 @@ window.Garden.RARE_FLOWERS = [
   { id: "moonflower_crimson", parentId: "moonflower", name: "Crimson Moonflower", sellPrice: 6000, interval: 16 },
 ];
 
+// Mythical variants: a pure jackpot roll on every planting of the parent
+// (checked before the deterministic rare interval). Sell for 8x the parent.
+window.Garden.MYTHIC_FLOWERS = [
+  { id: "daisy_celestial",    parentId: "daisy",       name: "Celestial Daisy",     sellPrice: 96,    chance: 0.02 },
+  { id: "tulip_phoenix",      parentId: "tulip",       name: "Phoenix Tulip",       sellPrice: 280,   chance: 0.02 },
+  { id: "marigold_ember",     parentId: "marigold",    name: "Ember Marigold",      sellPrice: 480,   chance: 0.02 },
+  { id: "rose_midnight",      parentId: "rose",        name: "Midnight Rose",       sellPrice: 720,   chance: 0.02 },
+  { id: "lavender_aurora",    parentId: "lavender",    name: "Aurora Lavender",     sellPrice: 1120,  chance: 0.02 },
+  { id: "jasmine_moonlit",    parentId: "jasmine",     name: "Moonlit Jasmine",     sellPrice: 1600,  chance: 0.02 },
+  { id: "orchid_dragon",      parentId: "orchid",      name: "Dragon Orchid",       sellPrice: 2400,  chance: 0.02 },
+  { id: "sunflower_eclipse",  parentId: "sunflower",   name: "Eclipse Sunflower",   sellPrice: 3600,  chance: 0.02 },
+  { id: "lotus_twilight",     parentId: "lotus",       name: "Twilight Lotus",      sellPrice: 5600,  chance: 0.02 },
+  { id: "calceolaria_royal",  parentId: "calceolaria", name: "Royal Calceolaria",   sellPrice: 8000,  chance: 0.02 },
+  { id: "dahlia_galaxy",      parentId: "dahlia",      name: "Galaxy Dahlia",       sellPrice: 12000, chance: 0.02 },
+  { id: "moonflower_prism",   parentId: "moonflower",  name: "Prism Moonflower",    sellPrice: 19200, chance: 0.02 },
+];
+
 window.Garden.flowerById = function (id) {
   const normal = window.Garden.FLOWERS.find(f => f.id === id);
   if (normal) return normal;
@@ -42,9 +59,18 @@ window.Garden.flowerById = function (id) {
     // seedCost is preserved from parent but rares aren't directly plantable.
     return Object.assign({}, parent, rare, { rare: true });
   }
+  const mythic = window.Garden.MYTHIC_FLOWERS.find(m => m.id === id);
+  if (mythic) {
+    const parent = window.Garden.FLOWERS.find(f => f.id === mythic.parentId);
+    return Object.assign({}, parent, mythic, { mythic: true });
+  }
   return null;
 };
 
 window.Garden.rareForParent = function (parentId) {
   return window.Garden.RARE_FLOWERS.find(r => r.parentId === parentId) || null;
+};
+
+window.Garden.mythicForParent = function (parentId) {
+  return window.Garden.MYTHIC_FLOWERS.find(m => m.parentId === parentId) || null;
 };

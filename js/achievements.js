@@ -11,6 +11,12 @@ window.Garden = window.Garden || {};
   function discoveredCount(s) {
     return Object.keys(s.discovered || {}).length;
   }
+  // Discovered entries within one tier list (RARE_FLOWERS / MYTHIC_FLOWERS) —
+  // s.discovered holds both tiers keyed by id, so tier goals must filter.
+  function discoveredIn(s, list) {
+    const d = s.discovered || {};
+    return list.filter(f => d[f.id]).length;
+  }
   function speciesHarvested(s) {
     return Object.keys(life(s).species || {}).length;
   }
@@ -20,8 +26,10 @@ window.Garden = window.Garden || {};
     { id: "green_thumb",    name: "Green Thumb",      desc: "Harvest 50 flowers",                   test: s => life(s).harvests >= 50 },
     { id: "master_gardener",name: "Master Gardener",  desc: "Harvest 250 flowers",                  test: s => life(s).harvests >= 250 },
     { id: "first_rare",     name: "Lucky Find",       desc: "Discover a rare variant",              test: s => discoveredCount(s) >= 1 },
-    { id: "rare_collector", name: "Rare Collector",   desc: "Discover 4 rare variants",             test: s => discoveredCount(s) >= 4 },
-    { id: "full_catalog",   name: "Full Catalog",     desc: "Discover every rare variant",          test: s => discoveredCount(s) >= Garden.RARE_FLOWERS.length },
+    { id: "rare_collector", name: "Rare Collector",   desc: "Discover 4 rare variants",             test: s => discoveredIn(s, Garden.RARE_FLOWERS) >= 4 },
+    { id: "full_catalog",   name: "Full Catalog",     desc: "Discover every rare variant",          test: s => discoveredIn(s, Garden.RARE_FLOWERS) >= Garden.RARE_FLOWERS.length },
+    { id: "mythic_first",   name: "Once in a Lifetime", desc: "Discover a mythical flower",         test: s => discoveredIn(s, Garden.MYTHIC_FLOWERS) >= 1 },
+    { id: "mythic_hunter",  name: "Myth Hunter",      desc: "Discover 3 mythical flowers",          test: s => discoveredIn(s, Garden.MYTHIC_FLOWERS) >= 3 },
     { id: "variety",        name: "Variety Gardener", desc: "Harvest 6 different species",          test: s => speciesHarvested(s) >= 6 },
     { id: "botanist",       name: "Botanist",         desc: "Harvest all 12 species",               test: s => speciesHarvested(s) >= Garden.FLOWERS.length },
     { id: "moon_harvest",   name: "Night Gardener",   desc: "Harvest a Moonflower",                 test: s => !!(life(s).species || {}).moonflower },

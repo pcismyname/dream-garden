@@ -280,12 +280,35 @@ window.Garden = window.Garden || {};
     if (SHAPES[flowerId]) return flowerId;
     const rare = (Garden.RARE_FLOWERS || []).find(r => r.id === flowerId);
     if (rare && SHAPES[rare.parentId]) return rare.parentId;
+    const mythic = (Garden.MYTHIC_FLOWERS || []).find(m => m.id === flowerId);
+    if (mythic && SHAPES[mythic.parentId]) return mythic.parentId;
     return "daisy";
+  }
+
+  // Four-point sparkle star for the mythic aura.
+  function sparkle(x, y, s, fill, opacity) {
+    return `<path d="M${x} ${y - s} L${x + s * 0.28} ${y - s * 0.28} L${x + s} ${y}
+      L${x + s * 0.28} ${y + s * 0.28} L${x} ${y + s} L${x - s * 0.28} ${y + s * 0.28}
+      L${x - s} ${y} L${x - s * 0.28} ${y - s * 0.28} Z" fill="${fill}" opacity="${opacity}"/>`;
+  }
+
+  // Glow halo behind + sparkles over a bloom — the mythic visual signature.
+  function mythicAura(content, glow) {
+    return `
+      <circle cx="40" cy="30" r="26" fill="${glow}" opacity="0.22"/>
+      <circle cx="40" cy="30" r="18" fill="${glow}" opacity="0.16"/>
+      ${content}
+      ${sparkle(18, 14, 4, "#fff", 0.9)}
+      ${sparkle(60, 20, 3, "#fff", 0.8)}
+      ${sparkle(56, 44, 3.5, "#fffbe0", 0.85)}
+      ${sparkle(24, 42, 2.5, "#fff", 0.7)}`;
   }
 
   function bloomContent(flowerId) {
     const c = COLORS[flowerId] || COLORS.daisy;
-    return SHAPES[shapeKeyFor(flowerId)](c.petal, c.center);
+    let content = SHAPES[shapeKeyFor(flowerId)](c.petal, c.center);
+    if (c.glow) content = mythicAura(content, c.glow);
+    return content;
   }
 
   // Wilted: a small dried plant clearly drooping inside the pot.
@@ -332,6 +355,19 @@ window.Garden = window.Garden || {};
     lotus_gold:         { petal: "#ffd84a", center: "#c98a10" },
     dahlia_black:       { petal: "#5a3a52", center: "#2a1028" },
     moonflower_crimson: { petal: "#d43a4a", center: "#5a0a14" },
+    // Mythics — `glow` drives the aura halo behind the bloom.
+    daisy_celestial:    { petal: "#a8c8ff", center: "#fff7c4", glow: "#7fa8ff" },
+    tulip_phoenix:      { petal: "#ff6a2a", center: "#ffd84a", glow: "#ff9a3d" },
+    marigold_ember:     { petal: "#ff5a1f", center: "#ffe66b", glow: "#ff7a2a" },
+    rose_midnight:      { petal: "#4a3a7e", center: "#c9a8ff", glow: "#8a6ad4" },
+    lavender_aurora:    { petal: "#7fe8d4", center: "#9a7fd4", glow: "#7fe8d4" },
+    jasmine_moonlit:    { petal: "#dce8ff", center: "#8fa8e8", glow: "#b8d0ff" },
+    orchid_dragon:      { petal: "#d42a3a", center: "#ffd84a", glow: "#ff5a4a" },
+    sunflower_eclipse:  { petal: "#3a3a4e", center: "#ff9a1f", glow: "#ffb84a" },
+    lotus_twilight:     { petal: "#8a6ad4", center: "#ffd1ff", glow: "#b48aff" },
+    calceolaria_royal:  { petal: "#6a3ad4", center: "#ffd84a", glow: "#9a6aff" },
+    dahlia_galaxy:      { petal: "#2a3a8e", center: "#9bd4ff", glow: "#5a7ae8" },
+    moonflower_prism:   { petal: "#eafff8", center: "#ff6ad4", glow: "#aff0e8" },
   };
 
   function flowerSvg(flowerId, stage) {

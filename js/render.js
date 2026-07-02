@@ -10,6 +10,7 @@ window.Garden = window.Garden || {};
   let selectedSeedId = "daisy";
   let selectedPotionId = null;  // when set, next plot click applies this potion
   let catalogOpen = false;
+  let catalogTab = "flowers"; // "flowers" | "variants" | "achievements"
   let settingsOpen = false;
   let shopOpen = false;
   let dailyOpen = false;
@@ -75,102 +76,127 @@ window.Garden = window.Garden || {};
     `);
   }
 
-  function renderCatalogCard(flower, locked, progress, intervalNeeded) {
-    if (locked) {
-      const parent = Garden.flowerById(flower.parentId);
-      return el(`
-        <div class="catalog-card locked-card">
-          <div class="catalog-icon">${Garden.svg.MYSTERY_ICON}</div>
-          <div class="catalog-info">
-            <div class="catalog-name">???</div>
-            <div class="catalog-hint">
-              Plant ${intervalNeeded} ${parent ? parent.name : "?"}s
-            </div>
-            <div class="catalog-progress">${progress}/${intervalNeeded}</div>
-          </div>
-        </div>
-      `);
-    }
-    // Discovered/normal card
-    const stats = [];
-    stats.push(`Lv ${flower.levelReq}`);
-    if (!flower.rare) {
-      stats.push(`<span class="mini-coin"></span>${flower.seedCost}→<span class="mini-coin"></span>${flower.sellPrice}`);
-    } else {
+  // One card for any flower tier. Discovered cards show art + stats with a
+  // tier tag; locked variant cards show the mystery icon + how to find it.
+  function catalogFlowerCard(flower) {
+    const tag = flower.mythic
+      ? ' <span class="rare-tag mythic-tag">MYTHIC</span>'
+      : flower.rare
+      ? ' <span class="rare-tag">RARE</span>'
+      : "";
+    const tier = flower.mythic ? "mythic-card" : flower.rare ? "rare-card" : "";
+    const stats = [`Lv ${flower.levelReq}`];
+    if (flower.rare || flower.mythic) {
       stats.push(`Sells <span class="mini-coin"></span>${flower.sellPrice}`);
+    } else {
+      stats.push(`<span class="mini-coin"></span>${flower.seedCost}→<span class="mini-coin"></span>${flower.sellPrice}`);
     }
     stats.push(`${Math.round(flower.growMs / 1000)}s grow`);
-
-    return el(`
-      <div class="catalog-card ${flower.rare ? "rare-card" : ""}">
+    return `
+      <div class="catalog-card ${tier}">
         <div class="catalog-icon">${Garden.svg.flowerIcon(flower.id)}</div>
         <div class="catalog-info">
-          <div class="catalog-name">${flower.name}${flower.rare ? ' <span class="rare-tag">RARE</span>' : ""}</div>
+          <div class="catalog-name">${flower.name}${tag}</div>
           <div class="catalog-stats">${stats.join(" · ")}</div>
         </div>
-      </div>
-    `);
+      </div>`;
+  }
+
+  function catalogLockedCard(hint, progressText, mythic) {
+    return `
+      <div class="catalog-card locked-card ${mythic ? "mythic-locked" : ""}">
+        <div class="catalog-icon">${Garden.svg.MYSTERY_ICON}</div>
+        <div class="catalog-info">
+          <div class="catalog-name">???</div>
+          <div class="catalog-hint">${hint}</div>
+          ${progressText ? `<div class="catalog-progress">${progressText}</div>` : ""}
+        </div>
+      </div>`;
+  }
+
+  function renderCatalogBody(state) {
+    const discovered = state.discovered || {};
+    const counts = state.plantCounts || {};
+
+    if (catalogTab === "flowers") {
+      return `
+        <section class="modal-section">
+          <h3 class="catalog-section-title">Common Flowers <span class="section-count">${Garden.FLOWERS.length} species</span></h3>
+          <div class="catalog-grid">${Garden.FLOWERS.map(catalogFlowerCard).join("")}</div>
+        </section>`;
+    }
+
+    if (catalogTab === "variants") {
+      const rareFound = Garden.RARE_FLOWERS.filter(r => discovered[r.id]).length;
+      const mythicFound = Garden.MYTHIC_FLOWERS.filter(m => discovered[m.id]).length;
+      const rareCards = Garden.RARE_FLOWERS.map(rare => {
+        if (discovered[rare.id]) return catalogFlowerCard(Garden.flowerById(rare.id));
+        const parent = Garden.flowerById(rare.parentId);
+        const progress = (counts[rare.parentId] || 0) % rare.interval;
+        return catalogLockedCard(`Plant ${rare.interval} × ${parent.name}`, `${progress}/${rare.interval}`, false);
+      }).join("");
+      const mythicCards = Garden.MYTHIC_FLOWERS.map(m => {
+        if (discovered[m.id]) return catalogFlowerCard(Garden.flowerById(m.id));
+        const parent = Garden.flowerById(m.parentId);
+        return catalogLockedCard(`${parent.name} plantings have a 1-in-${Math.round(1 / m.chance)} chance`, "", true);
+      }).join("");
+      return `
+        <section class="modal-section">
+          <h3 class="catalog-section-title">Rare Variants <span class="section-count">${rareFound}/${Garden.RARE_FLOWERS.length} found</span></h3>
+          <div class="catalog-grid">${rareCards}</div>
+        </section>
+        <section class="modal-section">
+          <h3 class="catalog-section-title">Mythical Flowers <span class="section-count">${mythicFound}/${Garden.MYTHIC_FLOWERS.length} found</span></h3>
+          <div class="catalog-grid">${mythicCards}</div>
+        </section>`;
+    }
+
+    // achievements tab
+    const achMap = state.achievements || {};
+    const defs = Garden.achievements ? Garden.achievements.ACHIEVEMENTS : [];
+    const done = Garden.achievements ? Garden.achievements.unlockedCount(state) : 0;
+    const cards = defs.map(a => {
+      const unlocked = !!achMap[a.id];
+      return `
+        <div class="catalog-card achieve-card ${unlocked ? "achieve-unlocked" : "locked-card"}">
+          <div class="achieve-icon">${unlocked ? "🏆" : "🔒"}</div>
+          <div class="catalog-info">
+            <div class="catalog-name">${a.name}</div>
+            <div class="catalog-hint">${a.desc}</div>
+          </div>
+        </div>`;
+    }).join("");
+    return `
+      <section class="modal-section">
+        <h3 class="catalog-section-title">Achievements <span class="section-count">${done}/${defs.length} unlocked</span></h3>
+        <div class="catalog-grid">${cards}</div>
+      </section>`;
   }
 
   function renderCatalog(state) {
-    const overlay = el(`
+    const achTotal = Garden.achievements ? Garden.achievements.ACHIEVEMENTS.length : 0;
+    const achDone = Garden.achievements ? Garden.achievements.unlockedCount(state) : 0;
+    const tabs = [
+      { id: "flowers", label: "🌿 Flowers" },
+      { id: "variants", label: "✨ Variants" },
+      { id: "achievements", label: `🏆 ${achDone}/${achTotal}` },
+    ];
+    return el(`
       <div class="modal-overlay" data-action="catalog-backdrop">
         <div class="modal-content catalog-modal">
           <header class="modal-header">
-            <h2>Flower Catalog</h2>
+            <h2>Collection Book</h2>
             <button class="modal-close" data-action="close-catalog" aria-label="Close">✕</button>
           </header>
-          <section class="catalog-section">
-            <h3 class="catalog-section-title">Common Flowers</h3>
-            <div class="catalog-grid" data-section="common"></div>
-          </section>
-          <section class="catalog-section">
-            <h3 class="catalog-section-title">Rare Variants</h3>
-            <div class="catalog-grid" data-section="rare"></div>
-          </section>
-          <section class="catalog-section">
-            <h3 class="catalog-section-title" data-achieve-title>Achievements</h3>
-            <div class="catalog-grid" data-section="achievements"></div>
-          </section>
+          <nav class="catalog-tabs">
+            ${tabs.map(t => `
+              <button class="catalog-tab ${t.id === catalogTab ? "active" : ""}"
+                data-action="catalog-tab" data-tab="${t.id}">${t.label}</button>`).join("")}
+          </nav>
+          <div class="modal-body">${renderCatalogBody(state)}</div>
         </div>
       </div>
     `);
-
-    const commonGrid = overlay.querySelector("[data-section='common']");
-    Garden.FLOWERS.forEach(f => commonGrid.appendChild(renderCatalogCard(f, false, 0, 0)));
-
-    const rareGrid = overlay.querySelector("[data-section='rare']");
-    const counts = state.plantCounts || {};
-    const discovered = state.discovered || {};
-    Garden.RARE_FLOWERS.forEach(rare => {
-      const fullRare = Garden.flowerById(rare.id);
-      const isDiscovered = !!discovered[rare.id];
-      const progress = (counts[rare.parentId] || 0) % rare.interval;
-      rareGrid.appendChild(renderCatalogCard(fullRare, !isDiscovered, progress, rare.interval));
-    });
-
-    if (Garden.achievements) {
-      const achGrid = overlay.querySelector("[data-section='achievements']");
-      const achMap = state.achievements || {};
-      const defs = Garden.achievements.ACHIEVEMENTS;
-      const title = overlay.querySelector("[data-achieve-title]");
-      title.textContent = `Achievements (${Garden.achievements.unlockedCount(state)}/${defs.length})`;
-      defs.forEach(a => {
-        const unlocked = !!achMap[a.id];
-        const card = el(`
-          <div class="catalog-card achieve-card ${unlocked ? "achieve-unlocked" : "locked-card"}">
-            <div class="achieve-icon">${unlocked ? "🏆" : "🔒"}</div>
-            <div class="catalog-info">
-              <div class="catalog-name">${a.name}</div>
-              <div class="catalog-hint">${a.desc}</div>
-            </div>
-          </div>
-        `);
-        achGrid.appendChild(card);
-      });
-    }
-
-    return overlay;
   }
 
   // Tutorial: pure function returning the current pulse target + label text,
@@ -356,22 +382,24 @@ window.Garden = window.Garden || {};
             <h2>Decoration Shop</h2>
             <button class="modal-close" data-action="close-shop" aria-label="Close">✕</button>
           </header>
-          <section class="shop-section">
-            <h3 class="catalog-section-title">For Sale</h3>
-            <div class="shop-grid" data-section="for-sale"></div>
-          </section>
-          <section class="shop-section">
-            <h3 class="catalog-section-title">Potions</h3>
-            <div class="shop-grid" data-section="potions"></div>
-          </section>
-          <section class="shop-section">
-            <h3 class="catalog-section-title">Pot Skins</h3>
-            <div class="shop-grid" data-section="pots"></div>
-          </section>
-          <section class="shop-section">
-            <h3 class="catalog-section-title">Your Decorations</h3>
-            <div class="shop-grid" data-section="placed"></div>
-          </section>
+          <div class="modal-body">
+            <section class="shop-section">
+              <h3 class="catalog-section-title">For Sale</h3>
+              <div class="shop-grid" data-section="for-sale"></div>
+            </section>
+            <section class="shop-section">
+              <h3 class="catalog-section-title">Potions</h3>
+              <div class="shop-grid" data-section="potions"></div>
+            </section>
+            <section class="shop-section">
+              <h3 class="catalog-section-title">Pot Skins</h3>
+              <div class="shop-grid" data-section="pots"></div>
+            </section>
+            <section class="shop-section">
+              <h3 class="catalog-section-title">Your Decorations</h3>
+              <div class="shop-grid" data-section="placed"></div>
+            </section>
+          </div>
         </div>
       </div>
     `);
@@ -944,7 +972,17 @@ window.Garden = window.Garden || {};
         return;
       }
 
-      // Catalog: open / close / backdrop
+      // Catalog: tab switch / open / close / backdrop
+      const catTabBtn = ev.target.closest("[data-action='catalog-tab']");
+      if (catTabBtn) {
+        const next = catTabBtn.dataset.tab;
+        if (next && next !== catalogTab) {
+          if (Garden.audio) Garden.audio.playSfx("ui-click");
+          catalogTab = next;
+          renderAll(currentState);
+        }
+        return;
+      }
       if (ev.target.closest("[data-action='open-catalog']")) {
         if (Garden.audio) Garden.audio.playSfx("ui-click");
         catalogOpen = true;
@@ -1286,7 +1324,17 @@ window.Garden = window.Garden || {};
       if (selectedSeedId === "mysterySeed") {
         Garden.state.plantMystery(state, idx);
       } else {
-        Garden.state.plant(state, idx, selectedSeedId);
+        const planted = Garden.state.plant(state, idx, selectedSeedId);
+        // Variant spawn is decided at plant time — celebrate the jackpot.
+        if (planted.ok && (planted.mythicSpawned || planted.rareSpawned) && Garden.fx) {
+          const variant = Garden.flowerById(state.plots[idx].flowerId);
+          if (planted.mythicSpawned) {
+            Garden.fx.toast("🌟 MYTHICAL! A " + variant.name + " is sprouting!", { variant: "mythic" });
+          } else {
+            Garden.fx.toast("✨ A rare " + variant.name + " is sprouting!", { variant: "rare" });
+          }
+          if (Garden.audio) Garden.audio.playSfx("rare-sparkle");
+        }
       }
       if (Garden.audio) Garden.audio.playSfx("plant");
       markTutorialStep(state, "planted");
@@ -1335,6 +1383,10 @@ window.Garden = window.Garden || {};
         color: "#3b8e3b", delay: 220,
       });
     }
+    if (result.mythic && Garden.fx) {
+      Garden.fx.toast("🌟 Mythical harvest! +" + result.coinsGained + "c", { variant: "mythic" });
+      if (Garden.audio) Garden.audio.playSfx("rare-sparkle");
+    }
     if (result.questCompleted && Garden.fx) {
       const qc = result.questCompleted;
       const flower = Garden.flowerById(qc.flowerId);
@@ -1367,6 +1419,7 @@ window.Garden = window.Garden || {};
     renderAll, renderTopBar, renderGrid, renderShelf, renderQuests, renderInventory,
     renderDecorationZone, renderShop, renderSettings, renderCatalog, setupHandlers,
     setSelectedSeedId: (id) => { selectedSeedId = id; },
+    setCatalogTab: (t) => { catalogTab = t; },
     getSelectedSeedId: () => selectedSeedId,
     openDailyReport: (recap) => {
       dailyRecap = recap || null;
