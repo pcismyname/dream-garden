@@ -211,6 +211,7 @@ window.Garden = window.Garden || {};
         plotEl.appendChild(content);
 
         if (stage === "bloomed") {
+          content.classList.add("bloom-live");
           // Show ✓ badge + wilt countdown so the player knows the harvest window is finite.
           const badge = document.createElement("div");
           badge.className = "ready-badge";
@@ -219,7 +220,7 @@ window.Garden = window.Garden || {};
 
           const flower = Garden.flowerById(plot.flowerId);
           if (flower) {
-            const wiltAt = plot.bloomAt + flower.growMs;
+            const wiltAt = plot.bloomAt + flower.growMs + (plot.wiltBonusMs || 0);
             const remaining = Math.max(0, Math.ceil((wiltAt - now) / 1000));
             const timer = document.createElement("div");
             timer.className = "timer wilt-timer";

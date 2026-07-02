@@ -57,5 +57,42 @@ window.Garden = window.Garden || {};
     });
   }
 
-  Garden.fx = { floatText, toast };
+  // Ambient scene layers, installed once at boot (they live outside the
+  // re-rendered #app tree so CSS loops never restart on renderAll):
+  //  - #sky-layer (z-index -1): two soft clouds drifting behind the UI.
+  //  - #ambient-layer (z-index 30): butterflies + falling petals, all
+  //    pointer-events: none. Purely decorative; CSS does all the motion.
+  function startAmbient() {
+    if (document.getElementById("ambient-layer")) return;
+
+    const sky = document.createElement("div");
+    sky.id = "sky-layer";
+    sky.innerHTML = `
+      <div class="cloud cloud-a"></div>
+      <div class="cloud cloud-b"></div>`;
+    document.body.appendChild(sky);
+
+    const butterflySvg = (wing, body) => `
+      <svg viewBox="0 0 24 20" width="100%" height="100%">
+        <g class="bf-wings">
+          <ellipse cx="7" cy="7" rx="6" ry="5.5" fill="${wing}" opacity="0.9"/>
+          <ellipse cx="17" cy="7" rx="6" ry="5.5" fill="${wing}" opacity="0.9"/>
+          <ellipse cx="8" cy="14" rx="4.5" ry="4" fill="${wing}" opacity="0.75"/>
+          <ellipse cx="16" cy="14" rx="4.5" ry="4" fill="${wing}" opacity="0.75"/>
+        </g>
+        <ellipse cx="12" cy="10" rx="1.6" ry="6" fill="${body}"/>
+      </svg>`;
+
+    const layer = document.createElement("div");
+    layer.id = "ambient-layer";
+    layer.innerHTML = `
+      <div class="butterfly butterfly-a">${butterflySvg("#ffb347", "#5a3815")}</div>
+      <div class="butterfly butterfly-b">${butterflySvg("#8fc7ff", "#2a3a5a")}</div>
+      <div class="petal petal-a"></div>
+      <div class="petal petal-b"></div>
+      <div class="petal petal-c"></div>`;
+    document.body.appendChild(layer);
+  }
+
+  Garden.fx = { floatText, toast, startAmbient };
 })(window.Garden);

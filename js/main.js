@@ -40,8 +40,17 @@ window.Garden = window.Garden || {};
 
     if (sig !== lastStageSig) {
       // A plot transitioned (e.g., growing → bloomed, bloomed → wilted). Full rebuild.
+      const oldStages = lastStageSig.split("|");
       lastStageSig = sig;
       Garden.render.renderAll(state);
+      // Bloom pop: one-shot scale-in on exactly the plots that just bloomed.
+      const newStages = sig.split("|");
+      const plotEls = document.querySelectorAll(".plot");
+      newStages.forEach((st, i) => {
+        if (st !== "bloomed" || oldStages[i] !== "growing" || !plotEls[i]) return;
+        const content = plotEls[i].querySelector(".plot-content");
+        if (content) content.classList.add("just-bloomed");
+      });
       return;
     }
 
@@ -61,7 +70,7 @@ window.Garden = window.Garden || {};
         target = plot.bloomAt;
       } else if (stage === "bloomed") {
         const flower = Garden.flowerById(plot.flowerId);
-        target = plot.bloomAt + (flower ? flower.growMs : 0);
+        target = plot.bloomAt + (flower ? flower.growMs : 0) + (plot.wiltBonusMs || 0);
       } else {
         return; // wilted or other — no live timer
       }
@@ -141,11 +150,15 @@ window.Garden = window.Garden || {};
     const recap = Garden.daily.computeRecap(state);
     Garden.daily.rolloverQuests(state);
     Garden.storage.save(state);
-    if (Garden.daily.claimablesCount(state) > 0) {
+    // Suppress the daily modal during the tutorial so a brand-new player's
+    // first sight is the garden (and the pre-spawned harvestable daisy),
+    // not a wall of claim buttons.
+    if (state.tutorialDone && Garden.daily.claimablesCount(state) > 0) {
       Garden.render.openDailyReport(recap);
     }
     Garden.render.setupHandlers();
     Garden.render.renderAll(state);
+    if (Garden.fx && Garden.fx.startAmbient) Garden.fx.startAmbient();
     lastStageSig = stageSignature(state, Date.now());
     setInterval(tick, 500);
     if (Garden.cg) Garden.cg.gameplayStart();

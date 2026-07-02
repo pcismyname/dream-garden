@@ -24,10 +24,12 @@ window.Garden = window.Garden || {};
       tutorialCycle: { planted: false, watered: false, sunned: false },
     };
     // Tutorial pre-spawn: place a bloomed daisy on the center plot so a
-    // brand-new player has a satisfying first action queued up.
+    // brand-new player has a satisfying first action queued up. The extended
+    // wilt window keeps it alive while the player looks around (a daisy's
+    // normal 10s window would kill it before the first click).
     const daisy = Garden.flowerById("daisy");
     if (daisy) {
-      s.plots[4] = { flowerId: "daisy", bloomAt: Date.now() };
+      s.plots[4] = { flowerId: "daisy", bloomAt: Date.now(), wiltBonusMs: 300000 };
     }
     for (let i = 0; i < 3; i++) s.quests.push(generateQuest(s));
     return s;
@@ -142,7 +144,7 @@ window.Garden = window.Garden || {};
     if (now < plot.bloomAt) return "growing";
     const flower = Garden.flowerById(plot.flowerId);
     if (!flower) return "bloomed"; // defensive
-    const wiltAt = plot.bloomAt + flower.growMs;
+    const wiltAt = plot.bloomAt + flower.growMs + (plot.wiltBonusMs || 0);
     if (now < wiltAt) return "bloomed";
     return "wilted";
   }

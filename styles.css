@@ -1241,3 +1241,133 @@ body {
   font-weight: 500;
   opacity: 0.9;
 }
+
+/* ==========================================================================
+   Ambience & game feel (quality push 2026-07-02)
+   ========================================================================== */
+
+/* Bloomed flowers idle-sway, anchored at the stem base so the loop restart
+   (on any full re-render) lands on the rest pose and never visibly jumps. */
+.plot-content.bloom-live {
+  animation: bloom-sway 4s ease-in-out infinite;
+  transform-origin: 50% 92%;
+}
+@keyframes bloom-sway {
+  0%, 100% { transform: rotate(0deg); }
+  30%      { transform: rotate(2.4deg); }
+  70%      { transform: rotate(-2.2deg); }
+}
+
+/* One-shot pop when a flower transitions growing → bloomed. The class is
+   added by main.js tick() only on the plot that changed. Composes with the
+   sway via a wrapper-free trick: pop uses scale, sway uses rotate, and pop
+   wins during its 0.45s run because it is declared later. */
+.plot-content.just-bloomed {
+  animation: bloom-pop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1), bloom-sway 4s ease-in-out 0.45s infinite;
+  transform-origin: 50% 92%;
+}
+@keyframes bloom-pop {
+  0%   { transform: scale(0.55); }
+  70%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+/* Sky layer: soft clouds drifting behind the whole UI. */
+#sky-layer {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.cloud {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 50%;
+  filter: blur(2px);
+}
+.cloud::before, .cloud::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+.cloud-a { width: 110px; height: 34px; top: 6%;  animation: cloud-drift 95s linear infinite; animation-delay: -30s; }
+.cloud-a::before { width: 55px; height: 40px; top: -18px; left: 18px; }
+.cloud-a::after  { width: 42px; height: 30px; top: -12px; left: 55px; }
+.cloud-b { width: 80px; height: 26px; top: 14%; animation: cloud-drift 140s linear infinite; animation-delay: -60s; opacity: 0.8; }
+.cloud-b::before { width: 40px; height: 28px; top: -13px; left: 14px; }
+.cloud-b::after  { width: 30px; height: 22px; top: -9px;  left: 40px; }
+@keyframes cloud-drift {
+  from { left: -140px; }
+  to   { left: 105%; }
+}
+
+/* Ambient life layer: butterflies + petals over the scene, under modals. */
+#ambient-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+.butterfly { position: absolute; width: 20px; height: 17px; opacity: 0; }
+.butterfly .bf-wings { animation: bf-flutter 0.35s ease-in-out infinite alternate; transform-origin: 12px 10px; }
+@keyframes bf-flutter {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0.45); }
+}
+.butterfly-a { animation: bf-drift-a 34s linear infinite; animation-delay: 4s; }
+.butterfly-b { animation: bf-drift-b 47s linear infinite; animation-delay: 18s; }
+@keyframes bf-drift-a {
+  0%   { left: -3%;  top: 58%; opacity: 0; }
+  4%   { opacity: 0.95; }
+  25%  { left: 24%;  top: 40%; }
+  50%  { left: 52%;  top: 62%; }
+  75%  { left: 78%;  top: 44%; }
+  96%  { opacity: 0.95; }
+  100% { left: 103%; top: 55%; opacity: 0; }
+}
+@keyframes bf-drift-b {
+  0%   { left: 103%; top: 30%; opacity: 0; }
+  4%   { opacity: 0.9; }
+  30%  { left: 70%;  top: 48%; }
+  55%  { left: 42%;  top: 28%; }
+  80%  { left: 16%;  top: 46%; }
+  96%  { opacity: 0.9; }
+  100% { left: -3%;  top: 36%; opacity: 0; }
+}
+
+/* Falling petals: sparse, slow, mostly transparent. */
+.petal {
+  position: absolute;
+  width: 9px;
+  height: 7px;
+  border-radius: 60% 40% 55% 45%;
+  background: #ffa3c2;
+  opacity: 0;
+}
+.petal-a { left: 22%; animation: petal-fall 16s linear infinite; animation-delay: 2s; }
+.petal-b { left: 55%; animation: petal-fall 21s linear infinite; animation-delay: 9s; background: #ffd1dc; }
+.petal-c { left: 81%; animation: petal-fall 18s linear infinite; animation-delay: 14s; background: #ffc4a3; }
+@keyframes petal-fall {
+  0%   { top: -3%; transform: translateX(0) rotate(0deg); opacity: 0; }
+  6%   { opacity: 0.85; }
+  25%  { transform: translateX(-14px) rotate(120deg); }
+  50%  { transform: translateX(10px) rotate(260deg); }
+  75%  { transform: translateX(-10px) rotate(380deg); }
+  92%  { opacity: 0.7; }
+  100% { top: 103%; transform: translateX(6px) rotate(480deg); opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plot-content.bloom-live,
+  .plot-content.just-bloomed,
+  .cloud,
+  .butterfly,
+  .butterfly .bf-wings,
+  .petal {
+    animation: none !important;
+  }
+  .butterfly, .petal { display: none; }
+}
