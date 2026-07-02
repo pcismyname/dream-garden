@@ -154,8 +154,113 @@ window.Garden = window.Garden || {};
       ${pouch(40, 38, 6.5)}`;
   }
 
+  function marigoldBloom(p, c) {
+    let ruffle = "";
+    for (let i = 0; i < 8; i++) {
+      ruffle += `<circle cx="40" cy="20.5" r="5.5" fill="${p}" ${OUTLINE} transform="rotate(${i * 45} 40 29)"/>`;
+    }
+    let inner = "";
+    for (let i = 0; i < 6; i++) {
+      inner += `<circle cx="40" cy="24" r="4" fill="#fff" opacity="0.22" transform="rotate(${i * 60 + 30} 40 29)"/>`;
+    }
+    return `${STEM_LEAVES}
+      <circle cx="40" cy="29" r="12.5" fill="${p}" ${OUTLINE}/>
+      ${ruffle}
+      <circle cx="40" cy="29" r="8" fill="${p}"/>
+      <circle cx="40" cy="29" r="8" fill="rgba(0,0,0,0.08)"/>
+      ${inner}
+      <circle cx="40" cy="29" r="3" fill="${c}"/>`;
+  }
+
+  function lavenderBloom(p, c) {
+    function spike(x, top, n) {
+      let buds = "";
+      for (let i = 0; i < n; i++) {
+        const y = top + i * 4.4;
+        const dx = (i % 2 === 0 ? -2.2 : 2.2) * (1 - i / (n + 2));
+        buds += `<ellipse cx="${x + dx}" cy="${y}" rx="3.1" ry="2.4" fill="${p}" ${OUTLINE}/>`;
+      }
+      return `${buds}<ellipse cx="${x}" cy="${top - 2.5}" rx="2.3" ry="3" fill="${c}"/>`;
+    }
+    return `
+      <path d="M31 40 Q31 56 40 68 M40 34 L40 68 M49 42 Q49 57 40 68"
+        stroke="#5a8e5a" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+      <path d="M40 60 Q31 54 27 57 Q31 64 40 62 Z" fill="#56b256" ${OUTLINE}/>
+      <path d="M42 54 Q50 49 53 52 Q49 59 42 56 Z" fill="#4aa54a" ${OUTLINE}/>
+      ${spike(31, 20, 5)}
+      ${spike(40, 13, 6)}
+      ${spike(49, 23, 5)}`;
+  }
+
+  function orchidBloom(p, c) {
+    return `
+      <path d="M40 68 Q36 52 39 40 Q40 34 42 32" stroke="#5a8e5a" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <path d="M40 62 Q30 56 26 59 Q31 66 40 64 Z" fill="#56b256" ${OUTLINE}/>
+      <ellipse cx="34" cy="20" rx="6" ry="11" fill="${p}" ${OUTLINE} transform="rotate(-28 34 24)"/>
+      <ellipse cx="50" cy="20" rx="6" ry="11" fill="${p}" ${OUTLINE} transform="rotate(28 50 24)"/>
+      <ellipse cx="28" cy="30" rx="9" ry="5.5" fill="${p}" ${OUTLINE} transform="rotate(-12 28 30)"/>
+      <ellipse cx="56" cy="30" rx="9" ry="5.5" fill="${p}" ${OUTLINE} transform="rotate(12 56 30)"/>
+      <ellipse cx="42" cy="14" rx="5" ry="8" fill="${p}" ${OUTLINE}/>
+      <path d="M34 30 Q42 24 50 30 Q48 42 42 43 Q36 42 34 30 Z" fill="${c}" ${OUTLINE}/>
+      <circle cx="39" cy="33" r="1.2" fill="rgba(255,255,255,0.55)"/>
+      <circle cx="45" cy="33" r="1.2" fill="rgba(255,255,255,0.55)"/>
+      <circle cx="42" cy="37" r="1.2" fill="rgba(255,255,255,0.55)"/>
+      <ellipse cx="42" cy="27" rx="3" ry="2" fill="#fff" opacity="0.5"/>`;
+  }
+
+  function lotusBloom(p, c) {
+    let back = "";
+    [-38, -13, 13, 38].forEach(a => {
+      back += pointedPetal(40, 42, 26, 8, a, p, null);
+    });
+    let front = "";
+    [-26, 0, 26].forEach(a => {
+      front += pointedPetal(40, 44, 22, 9, a, p, null);
+    });
+    return `
+      <ellipse cx="40" cy="48" rx="19" ry="5" fill="#3d9142" ${OUTLINE}/>
+      <path d="M40 48 L52 45" stroke="#2d6b2d" stroke-width="1" opacity="0.5"/>
+      ${back}
+      <g opacity="0.14"><circle cx="40" cy="30" r="16" fill="#000"/></g>
+      ${front}
+      <circle cx="40" cy="38" r="3.5" fill="${c}"/>
+      <circle cx="39" cy="37" r="1.3" fill="#fff" opacity="0.5"/>`;
+  }
+
+  function dahliaBloom(p, c) {
+    let outer = "";
+    for (let i = 0; i < 12; i++) {
+      outer += pointedPetal(40, 30, 17, 4.5, i * 30, p, null);
+    }
+    let mid = "";
+    for (let i = 0; i < 8; i++) {
+      mid += pointedPetal(40, 30, 11, 3.6, i * 45 + 15, p, null);
+    }
+    return `${STEM_LEAVES}${outer}
+      <circle cx="40" cy="30" r="9" fill="rgba(0,0,0,0.1)"/>
+      ${mid}
+      <g opacity="0.25">${pointedPetal(40, 30, 11, 3.6, 60, "#fff")}${pointedPetal(40, 30, 11, 3.6, 285, "#fff")}</g>
+      <circle cx="40" cy="30" r="3.2" fill="${c}"/>`;
+  }
+
+  function moonflowerBloom(p, c) {
+    let lobes = "";
+    for (let i = 0; i < 5; i++) {
+      lobes += `<circle cx="40" cy="17.5" r="6" fill="${p}" ${OUTLINE} transform="rotate(${i * 72 + 36} 40 28)"/>`;
+    }
+    return `
+      <path d="M40 68 Q34 58 38 46 Q41 40 40 38" stroke="#4a8e5a" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+      <path d="M39 52 Q30 48 27 51 Q31 58 39 55 Z" fill="#56b256" ${OUTLINE}/>
+      <circle cx="40" cy="28" r="17" fill="${p}" opacity="0.28"/>
+      ${lobes}
+      <circle cx="40" cy="28" r="11" fill="${p}"/>
+      <path d="M33 25 L47 31 M33 31 L47 25 M40 20 L40 36" stroke="${c}" stroke-width="1.1" opacity="0.5"/>
+      <circle cx="40" cy="28" r="3" fill="${c}"/>
+      <circle cx="36" cy="24" r="2" fill="#fff" opacity="0.55"/>`;
+  }
+
   // Species id → bloom shape function. Rares map to their parent's shape
-  // (same species, rare color) via SHAPE_KEY.
+  // (same species, rare color) via shapeKeyFor.
   const SHAPES = {
     daisy: daisyBloom,
     tulip: tulipBloom,
@@ -163,6 +268,12 @@ window.Garden = window.Garden || {};
     jasmine: jasmineBloom,
     sunflower: sunflowerBloom,
     calceolaria: calceolariaBloom,
+    marigold: marigoldBloom,
+    lavender: lavenderBloom,
+    orchid: orchidBloom,
+    lotus: lotusBloom,
+    dahlia: dahliaBloom,
+    moonflower: moonflowerBloom,
   };
 
   function shapeKeyFor(flowerId) {
@@ -202,6 +313,12 @@ window.Garden = window.Garden || {};
     jasmine:     { petal: "#fff7e0", center: "#f4d27a" },
     sunflower:   { petal: "#ffd84a", center: "#7a4a1a" },
     calceolaria: { petal: "#ff9933", center: "#cc5500" },
+    marigold:    { petal: "#f5a623", center: "#b35c00" },
+    lavender:    { petal: "#9a7fd4", center: "#6a4fb0" },
+    orchid:      { petal: "#e87ab8", center: "#8a2f6a" },
+    lotus:       { petal: "#ffb3c6", center: "#ffd84a" },
+    dahlia:      { petal: "#e0526e", center: "#8a1f3a" },
+    moonflower:  { petal: "#f2f0ff", center: "#8f84d8" },
     // Rares
     daisy_pink:       { petal: "#ffa3c2", center: "#ff5588" },
     tulip_purple:     { petal: "#9b4ad4", center: "#6a2fa0" },
@@ -209,6 +326,12 @@ window.Garden = window.Garden || {};
     jasmine_purple:   { petal: "#c79bff", center: "#7a4ad0" },
     sunflower_orange: { petal: "#ff8833", center: "#aa3300" },
     calceolaria_red:  { petal: "#e84a4a", center: "#aa1111" },
+    marigold_white:     { petal: "#fdf6e3", center: "#d4a017" },
+    lavender_pink:      { petal: "#e8a0c8", center: "#b0509a" },
+    orchid_blue:        { petal: "#6a8fe8", center: "#24357a" },
+    lotus_gold:         { petal: "#ffd84a", center: "#c98a10" },
+    dahlia_black:       { petal: "#5a3a52", center: "#2a1028" },
+    moonflower_crimson: { petal: "#d43a4a", center: "#5a0a14" },
   };
 
   function flowerSvg(flowerId, stage) {
